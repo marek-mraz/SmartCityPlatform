@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "orion-sync-unwrapper.fullname" . }}-script
+  labels:
+    {{- include "orion-sync-unwrapper.labels" . | nindent 4 }}
+data:
+  unwrapper.py: |
+    import urllib.request, urllib.error, json, traceback
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class DynamicUnwrapper(BaseHTTPRequestHandler):
+        def do_GET(self):
+            # Useful for health checks
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"Dynamic Unwrapper is running.")
+
+        def do_HEAD(self):
+            self.send_response(200)
+            self.end_headers()
+
+        def do_POST(self):
+            try:
+                target_base_url = self.path.lstrip('/')
+                if not target_base_url.startswith('http'):
+                    print(f"Error: Invalid path '{self.path}'. Target URL must start with http/https.")
+                    self.send_response(400); self.end_headers(); return
+
+
+                tenant = self.headers.get('NGSILD-Tenant', 'airquality')
+                length = int(self.headers.get('Content-Length', 0))
+                payload = json.loads(self.rfile.read(length))
+                
+                entities = payload.get('data',[])
+                if not entities:
+                    self.send_response(204); self.end_headers(); return
+                
+                # Remove invalid @context that sometimes appears as [None]
+                for entity in entities:
+                    if '@context' in entity:
+                        del entity['@context']
+
+                remote_context = 'https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.3.jsonld'
+                url = f'{target_base_url.rstrip("/")}/ngsi-ld/v1/entityOperations/upsert?options=update'
+                
+                print(f"Routing {len(entities)} entities to -> {url} (Tenant: {tenant})")
+                print(f"Entities: {entities}")
+                req = urllib.request.Request(
+                    url, 
+                    data=json.dumps(entities).encode('utf-8'),
+                    headers={
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/ld+json',
+                        'NGSILD-Tenant': tenant,
+                        'Link': f'<{remote_context}>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"'
+                    },
+                    method='POST'
+                )
+                
+                try:
+                    with urllib.request.urlopen(req) as response:
+                        res_body = response.read().decode('utf-8')
+                        print(f"Success! Remote status: {response.status}")
+                        print(f"Remote response: {res_body}")
+                except urllib.error.HTTPError as e:
+                    err_body = e.read().decode('utf-8')
+                    print(f"HTTP Error {e.code}: {err_body}")
+                    raise e
+                
+                self.send_response(200); self.end_headers()
+            except Exception as e:
+                print(f"Error processing request: {e}")
+                traceback.print_exc()
+                self.send_response(500); self.end_headers()
+
+    print("Dynamic Unwrapper listening on port 8080...")
+    HTTPServer(('', 8080), DynamicUnwrapper).serve_forever()

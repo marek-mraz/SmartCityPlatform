@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "iot-agent-json.fullname" . }}
+  labels:
+    {{- include "iot-agent-json.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "iot-agent-json.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "iot-agent-json.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: iot-agent-json
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 4041
+              protocol: TCP
+          env:
+            - name: IOTA_LOG_LEVEL
+              value: {{ .Values.config.logLevel }}
+            - name: IOTA_DEFAULT_KEY
+              value: {{ .Values.config.defaultKey }}
+            - name: IOTA_CB_HOST
+              value: {{ .Values.config.iotaCbHost }}
+            - name: IOTA_CB_PORT
+              value: "{{ .Values.config.iotaCbPort }}"
+            - name: IOTA_MQTT_HOST
+              value: {{ .Values.config.iotaMqttHost }}
+            - name: IOTA_MQTT_PORT
+              value: "{{ .Values.config.iotaMqttPort }}"
+            {{- if .Values.config.iotaMqttUsername }}
+            - name: IOTA_MQTT_USERNAME
+              value: {{ .Values.config.iotaMqttUsername | quote }}
+            {{- end }}
+            {{- if .Values.config.iotaMqttPassword }}
+            - name: IOTA_MQTT_PASSWORD
+              value: {{ .Values.config.iotaMqttPassword | quote }}
+            {{- end }}
+            - name: IOTA_REGISTRY_TYPE
+              value: {{ .Values.config.iotaRegistryType }}
+            - name: IOTA_MONGO_PORT
+              value: "{{ .Values.config.iotaMongoPort }}"
+            - name: IOTA_MONGO_DB
+              value: "{{ .Values.config.iotaMongoDb }}{{ if .Values.config.mongoAuth.enabled }}?authSource=admin{{ end }}"
+            - name: IOTA_NORTH_PORT
+              value: "4041"
+            - name: IOTA_CB_NGSI_VERSION
+              value: {{ .Values.config.iotaCbNgsiVersion | default "v2" | quote }}
+            - name: IOTA_JSON_LD_CONTEXT
+              value: {{ .Values.config.iotaJsonLdContext | default "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" | quote }}
+            - name: IOTA_FALLBACK_TENANT
+              value: {{ .Values.config.iotaFallbackTenant | default "" | quote }}
+            {{- if .Values.config.mongoAuth.enabled }}
+            - name: _MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.mongoAuth.secretName }}
+                  key: {{ .Values.config.mongoAuth.secretKey }}
+            - name: IOTA_MONGO_HOST
+              value: "{{ .Values.config.mongoAuth.user }}:$(_MONGO_PASSWORD)@{{ .Values.config.iotaMongoHost }}"
+            {{- else }}
+            - name: IOTA_MONGO_HOST
+              value: {{ .Values.config.iotaMongoHost }}
+            {{- end }}

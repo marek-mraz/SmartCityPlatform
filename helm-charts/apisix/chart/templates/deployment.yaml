@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "apisix.fullname" . }}
+  labels:
+    {{- include "apisix.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "apisix.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "apisix.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: apisix
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.config.existingSecret }}
+          env:
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.existingSecret }}
+                  key: {{ .Values.config.existingSecretKey | default "client-secret" }}
+          {{- else }}
+          env:
+            - name: KEYCLOAK_CLIENT_SECRET
+              value: "{{ .Values.config.keycloakClientSecret }}"
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - name: apisix-config
+              mountPath: /usr/local/apisix/conf/config.yaml
+              subPath: config.yaml
+            - name: apisix-routes
+              mountPath: /usr/local/apisix/conf/apisix.yaml
+              subPath: apisix.yaml
+        - name: opa
+          image: openpolicyagent/opa:1.2.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http-opa
+              containerPort: 8181
+              protocol: TCP
+          args:
+            - "run"
+            - "--ignore=.*"
+            - "--server"
+            - "-l"
+            - "debug"
+            - "--addr"
+            - "0.0.0.0:8181"
+            - "/policy/main.rego"
+          volumeMounts:
+            - name: opa-policy
+              mountPath: /policy/main.rego
+              subPath: main.rego
+      volumes:
+        - name: apisix-config
+          configMap:
+            name: {{ include "apisix.fullname" . }}-apisix
+        - name: apisix-routes
+          configMap:
+            name: {{ include "apisix.fullname" . }}-routes
+        - name: opa-policy
+          configMap:
+            name: {{ include "apisix.fullname" . }}-opa

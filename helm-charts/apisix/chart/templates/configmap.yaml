@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "apisix.fullname" . }}-apisix
+  labels:
+    {{- include "apisix.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    deployment:
+      role: data_plane
+      role_data_plane:
+        config_provider: yaml
+    apisix:
+      node_listen: 80
+      enable_admin: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "apisix.fullname" . }}-routes
+  labels:
+    {{- include "apisix.labels" . | nindent 4 }}
+data:
+  apisix.yaml: |
+    routes:
+      - uri: "/*"
+        upstream:
+          nodes:
+            "{{ .Values.config.orionHost }}:{{ .Values.config.orionPort }}": 1
+          type: roundrobin
+        plugins:
+          openid-connect:
+            client_id: "{{ .Values.config.keycloakClientId }}"
+            client_secret: "${{ "{{" }}KEYCLOAK_CLIENT_SECRET{{ "}}" }}"
+            discovery: "{{ .Values.config.keycloakDiscoveryUrl }}"
+            bearer_only: true
+            use_jwks: true
+            ssl_verify: false
+          opa:
+            host: "http://127.0.0.1:8181"
+            policy: policy/main
+    #END
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "apisix.fullname" . }}-opa
+  labels:
+    {{- include "apisix.labels" . | nindent 4 }}
+data:
+  main.rego: |
+    package policy.main
+
+    import rego.v1
+
+    default allow := false
+
+    token := payload if {
+        auth_header := input.request.headers.authorization
+        startswith(auth_header, "Bearer ")
+        [_, jwt] := split(auth_header, " ")
+        [_, payload, _] := io.jwt.decode(jwt)
+    }
+
+    # Admins can do anything
+    allow if {
+        "admin" in token.resource_access["apisix-pep"].roles
+    }
+    
+    # Producers can create, update, and delete
+    allow if {
+        "producer" in token.resource_access["apisix-pep"].roles
+        input.request.method in ["POST", "PATCH", "PUT", "DELETE"]
+    }
+    
+    # Consumers can only read (GET requests)
+    allow if {
+        "consumer" in token.resource_access["apisix-pep"].roles
+        input.request.method == "GET"
+    }
+
+    # Subscriptors can read and manage subscriptions
+    allow if {
+        "subscriptor" in token.resource_access["apisix-pep"].roles
+        startswith(input.request.path, "/ngsi-ld/v1/subscriptions")
+    }

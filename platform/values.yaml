@@ -1,0 +1,642 @@
+source: https://github.com/Mrazbb/SmartCity
+release: fiware
+destination_namespace: &destination fiware
+mosquitto_port: &mosquitto_port 1883
+branch: &branch main
+secretsEnabled: &secretsEnabled true
+keycloakEnabled: &keycloakEnabled true
+host: &host example.com
+tlsSecret: &tlsSecret
+tsdbUser: &tsdbUser admin
+
+applications:
+  - name: platform-secrets
+    enabled: true
+    source_path: helm-charts/platform-secrets
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+
+  - name: scorpio
+    enabled: true
+    source_path: helm-charts/scorpio/chart
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+    values:
+      postgresql:
+        enabled: false
+        host: tsdb
+        port: 5432
+        user: *tsdbUser
+        database: postgres
+        existingSecret: tsdb-credentials
+        existingSecretPasswordKey: password
+      fullnameOverride: scorpio
+      nameOverride: scorpio
+      ingress:
+        enabled: true
+        className: traefik
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+        hosts:
+          - host: scorpio.{{ $.Values.host | default `localhost` }}
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: scorpio-tls
+            hosts:
+              - scorpio.{{ $.Values.host | default `localhost` }}
+
+
+  - name: timescale
+    releaseName: tsdb
+    enabled: true
+    source_path: helm-charts/timescale/chart
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+    values:
+      fullnameOverride: tsdb
+      nameOverride: tsdb
+      postgresql:
+        user: *tsdbUser
+        database: postgres
+        existingSecret: tsdb-credentials
+        existingSecretPasswordKey: password
+      persistence:
+        enabled: false # Disable persistence to avoid conflicts with TimescaleDB
+
+  - name: grafana
+    enabled: true
+    source_path: helm-charts/grafana/chart
+    source_ref: *branch
+    destination: *destination
+    secretsReady: true # Don't change. This means that the chart is prepared to use Sealed Secrets
+    helm_values:
+    - values.yaml
+    values:
+      route:
+        enabled: false
+      tests:
+        enabled: false
+      grafana:
+        serviceMonitor:
+          enabled: false
+        extraSecretMounts: []
+        admin:
+          existingSecret: grafana-admin-user
+          userKey: admin-user
+          passwordKey: admin-password
+        image:
+          tag: "12.4"
+        grafana.ini:
+          server:
+            root_url: https://grafana.{{ $.Values.host | default `localhost` }}
+          auth.generic_oauth:
+            enabled: true
+            name: Keycloak
+            allow_sign_up: true
+            client_id: grafana
+            client_secret: ${GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
+            scopes: openid email profile
+            auth_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/auth"
+            token_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/token"
+            api_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/userinfo"
+            role_attribute_path: "contains(resource_access.grafana.roles[*], 'Admin') && 'Admin' || contains(resource_access.grafana.roles[*], 'Editor') && 'Editor' || 'Viewer'"
+        env:
+          GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: "ngsild-grafana-datasource"
+        envValueFrom:
+          GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+            secretKeyRef:
+              name: grafana-oauth
+              key: client-secret
+          NGSILD_CLIENT_SECRET:
+            secretKeyRef:
+              name: ngsild-oauth
+              key: client-secret
+          TSDB_PASSWORD:
+            secretKeyRef:
+              name: tsdb-credentials
+              key: password
+        plugins:
+          - "https://github.com/Mrazbb/ngsild-grafana-datasource/releases/download/v7.0.6/ngsild-grafana-datasource.zip;ngsild-grafana-datasource"
+        datasources:
+          datasources.yaml:
+            apiVersion: 1
+            datasources:
+              - name: NGSI-LD
+                type: ngsild-grafana-datasource
+                uid: ngsild
+                access: proxy
+                url: '{{ if $.Values.keycloakEnabled }}http://apisix:80{{ else }}http://scorpio:9090{{ end }}'
+                jsonData:
+                  tenant: "airquality"
+                  contextUrl: "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+                  tlsAuth: false
+                  tlsAuthWithCACert: false
+                  tlsSkipVerify: false
+                  httpMode: GET
+                  authType: oauth
+                  tokenUrl: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/token"
+                  flavour: generic
+                  httpHeaderName1: "NGSILD-Path"
+                  clientId: "grafana-ngsild"
+                  clientSecret: "ngsild-secret"
+                secureJsonData:
+                  clientId: "grafana-ngsild"
+                  clientSecret: "${NGSILD_CLIENT_SECRET}"
+                  httpHeaderValue1: "/#"
+              - name: TimescaleDB
+                type: postgres
+                uid: timescaledb
+                url: tsdb:5432
+                database: postgres
+                user: *tsdbUser
+                secureJsonData:
+                  password: "${TSDB_PASSWORD}"
+                jsonData:
+                  sslmode: "disable"
+                  postgresVersion: 1400
+                  timescaledb: true
+        ingress:
+          enabled: true
+          ingressClassName: traefik
+          annotations:
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            traefik.ingress.kubernetes.io/router.tls: "true"
+            traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+          hosts:
+            - grafana.{{ $.Values.host | default `localhost` }}
+          tls:
+            - secretName: grafana-tls
+              hosts:
+                - grafana.{{ $.Values.host | default `localhost` }}
+
+  - name: advanced-dashboards
+    enabled: true
+    source_path: helm-charts/advanced-dashboards/chart
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+
+  - name: keycloak
+    enabled: *keycloakEnabled
+    source_path: helm-charts/keycloak/chart
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+    values:
+      http:
+        relativePath: "/"
+      command:
+        - "/opt/keycloak/bin/kc.sh"
+        - "start"
+        - "--http-port=8080"
+        - "--hostname-strict=false"
+        - "--proxy-headers=xforwarded"
+      extraEnv: |
+        - name: KEYCLOAK_ADMIN
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-credentials
+              key: username
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-credentials
+              key: password
+        - name: KC_DB
+          value: postgres
+        - name: KC_DB_URL
+          value: jdbc:postgresql://tsdb:5432/postgres
+        - name: KC_DB_USERNAME
+          value: "{{ $.Values.tsdbUser }}"
+        - name: KC_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: tsdb-credentials
+              key: password
+        - name: KC_HOSTNAME
+          value: "https://auth.{{ $.Values.host | default `localhost` }}"
+      extraManifests:
+        - |
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: keycloak-config-cli
+            labels:
+              app.kubernetes.io/name: keycloak-config-cli
+            annotations:
+              helm.sh/hook: post-install,post-upgrade
+              helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: keycloak-config-cli
+                    image: adorsys/keycloak-config-cli:latest
+                    env:
+                      - name: KEYCLOAK_URL
+                        value: "http://keycloak-keycloakx-http:80/"
+                      - name: KEYCLOAK_USER
+                        valueFrom:
+                          secretKeyRef:
+                            name: keycloak-admin-credentials
+                            key: username
+                      - name: KEYCLOAK_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: keycloak-admin-credentials
+                            key: password
+                      - name: GRAFANA_CLIENT_SECRET
+                        valueFrom:
+                          secretKeyRef:
+                            name: grafana-oauth
+                            key: client-secret
+                      - name: MQTT_EXPLORER_CLIENT_SECRET
+                        valueFrom:
+                          secretKeyRef:
+                            name: mqtt-explorer-oauth2
+                            key: client-secret
+                      - name: NODE_RED_CLIENT_SECRET
+                        valueFrom:
+                          secretKeyRef:
+                            name: node-red-oauth2
+                            key: client-secret
+                      - name: CB_PEP_CLIENT_SECRET
+                        valueFrom:
+                          secretKeyRef:
+                            name: cb-pep-credentials
+                            key: client-secret
+                      - name: NGSILD_CLIENT_SECRET
+                        valueFrom:
+                          secretKeyRef:
+                            name: ngsild-oauth
+                            key: client-secret
+                      - name: CONSUMER_USER_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: consumer-user-credentials
+                            key: password
+                      - name: ADMIN_USER_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: admin-user-credentials
+                            key: password
+                      - name: KEYCLOAK_AVAILABILITYCHECK_ENABLED
+                        value: "true"
+                      - name: KEYCLOAK_AVAILABILITYCHECK_TIMEOUT
+                        value: "300s"
+                      - name: IMPORT_VARSUBSTITUTION_ENABLED
+                        value: "true"
+                      - name: IMPORT_FILES_LOCATIONS
+                        value: "/realm-config/*"
+                    volumeMounts:
+                      - name: realm-config
+                        mountPath: /realm-config
+                volumes:
+                  - name: realm-config
+                    configMap:
+                      name: keycloak-realm-config
+                restartPolicy: Never
+        - |
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: keycloak-realm-config
+            labels:
+              app.kubernetes.io/name: keycloak
+          data:
+            realm.json: |
+              {
+                "realm": "fiware-server",
+                "enabled": true,
+                "clients": [
+                  {
+                    "clientId": "grafana",
+                    "enabled": true,
+                    "clientAuthenticatorType": "client-secret",
+                    "secret": "$(env:GRAFANA_CLIENT_SECRET)",
+                    "standardFlowEnabled": true,
+                    "directAccessGrantsEnabled": true,
+                    "redirectUris": [
+                      "https://grafana.{{ $.Values.host | default `localhost` }}/*",
+                      "https://grafana-metrics.{{ $.Values.host | default `localhost` }}/*"
+                    ],
+                    "webOrigins": ["+"],
+                    "publicClient": false,
+                    "protocol": "openid-connect",
+                    "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
+                  },
+                  {
+                    "clientId": "mqtt-explorer2",
+                    "enabled": true,
+                    "clientAuthenticatorType": "client-secret",
+                    "secret": "$(env:MQTT_EXPLORER_CLIENT_SECRET)",
+                    "standardFlowEnabled": true,
+                    "directAccessGrantsEnabled": true,
+                    "redirectUris": [
+                      "https://mqtt-explorer.{{ $.Values.host | default `localhost` }}/*"
+                    ],
+                    "webOrigins": ["+"],
+                    "publicClient": false,
+                    "protocol": "openid-connect",
+                    "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
+                  },
+                  {
+                    "clientId": "node-red",
+                    "enabled": true,
+                    "clientAuthenticatorType": "client-secret",
+                    "secret": "$(env:NODE_RED_CLIENT_SECRET)",
+                    "standardFlowEnabled": true,
+                    "directAccessGrantsEnabled": true,
+                    "redirectUris": [
+                      "https://node-red.{{ $.Values.host | default `localhost` }}/*"
+                    ],
+                    "webOrigins": ["+"],
+                    "publicClient": false,
+                    "protocol": "openid-connect",
+                    "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
+                  },
+                  {
+                    "clientId": "apisix-pep",
+                    "enabled": true,
+                    "clientAuthenticatorType": "client-secret",
+                    "secret": "$(env:CB_PEP_CLIENT_SECRET)",
+                    "serviceAccountsEnabled": true,
+                    "standardFlowEnabled": true,
+                    "directAccessGrantsEnabled": true,
+                    "publicClient": false,
+                    "protocol": "openid-connect",
+                    "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
+                  },
+                  {
+                    "clientId": "grafana-ngsild",
+                    "enabled": true,
+                    "clientAuthenticatorType": "client-secret",
+                    "secret": "$(env:NGSILD_CLIENT_SECRET)",
+                    "serviceAccountsEnabled": true,
+                    "standardFlowEnabled": false,
+                    "directAccessGrantsEnabled": true,
+                    "publicClient": false,
+                    "protocol": "openid-connect",
+                    "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
+                  }
+                ],
+                "users": [
+                  {
+                    "username": "consumer-user",
+                    "enabled": true,
+                    "emailVerified": true,
+                    "requiredActions": [],
+                    "email": "consumer-user@example.com",
+                    "firstName": "Consumer",
+                    "lastName": "User",
+                    "credentials": [
+                      {
+                        "type": "password",
+                        "value": "${CONSUMER_USER_PASSWORD}",
+                        "temporary": false
+                      }
+                    ],
+                    "realmRoles": ["consumer"],
+                    "clientRoles": {
+                      "apisix-pep": ["consumer"],
+                      "grafana": ["Viewer"]
+                    }
+                  },
+                  {
+                    "username": "admin-user",
+                    "enabled": true,
+                    "emailVerified": true,
+                    "email": "admin-user@example.com",
+                    "firstName": "Admin",
+                    "lastName": "User",
+                    "requiredActions": [],
+                    "credentials": [
+                      {
+                        "type": "password",
+                        "value": "${ADMIN_USER_PASSWORD}",
+                        "temporary": false
+                      }
+                    ]
+                  }
+                ],
+                "roles": {
+                  "realm": [
+                    { "name": "admin" },
+                    { "name": "consumer" },
+                    { "name": "producer" }
+                  ],
+                  "client": {
+                    "apisix-pep": [
+                      { "name": "admin" },
+                      { "name": "consumer" },
+                      { "name": "producer" }
+                    ],
+                    "grafana": [
+                      { "name": "Admin" },
+                      { "name": "Editor" },
+                      { "name": "Viewer" }
+                    ]
+                  }
+                }
+              }
+      serviceMonitor:
+          enabled: false
+      ingress:
+        enabled: true
+        className: traefik
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+        rules:
+          - host: "auth.{{ $.Values.host | default `localhost` }}"
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - hosts:
+              - "auth.{{ $.Values.host | default `localhost` }}"
+            secretName: keycloak-tls
+
+
+
+  - name: grafana-metrics
+    enabled: false
+    source_path: helm-charts/grafana-metrics/chart
+    source_ref: *branch
+    destination: *destination
+    secretsReady: true # Don't change. This means that the chart is prepared to use Sealed Secrets
+    helm_values:
+    - values.yaml
+    values:
+      route:
+        enabled: false
+      grafana:
+        grafana.ini:
+          server:
+            root_url: https://grafana-metrics.{{ $.Values.host | default `localhost` }}
+          auth.generic_oauth:
+            enabled: true
+            name: Keycloak
+            allow_sign_up: true
+            client_id: grafana
+            client_secret: ${GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
+            scopes: openid email profile
+            auth_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/auth"
+            token_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/token"
+            api_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/userinfo"
+            role_attribute_path: contains(resource_access.grafana.roles[*], 'Admin') && 'Admin' || contains(resource_access.grafana.roles[*], 'Editor') && 'Editor' || 'Viewer'
+        envValueFrom:
+          GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+            secretKeyRef:
+              name: grafana-oauth
+              key: client-secret
+        serviceMonitor:
+          enabled: false
+        ingress:
+          enabled: true
+          ingressClassName: traefik
+          annotations:
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            traefik.ingress.kubernetes.io/router.tls: "true"
+            traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+          hosts:
+            - grafana-metrics.{{ $.Values.host | default `localhost` }}
+          tls:
+            - secretName: grafana-metrics-tls
+              hosts:
+                - grafana-metrics.{{ $.Values.host | default `localhost` }}
+
+  - name: emqx
+    enabled: true
+    source_path: helm-charts/emqx/chart
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+    values:
+      service:
+        type: LoadBalancer
+      emqxConfig:
+        EMQX_ALLOW_ANONYMOUS: "true"
+
+  - name: node-red
+    enabled: true
+    source_path: helm-charts/node-red/chart
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+    values:
+      oauth2Proxy:
+        enabled: true
+        clientId: node-red
+        existingSecret: node-red-oauth2
+        oidcIssuerUrl: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server"
+      ingress:
+        enabled: true
+        className: traefik
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+        hosts:
+          - host: "node-red.{{ $.Values.host | default `localhost` }}"
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: node-red-tls
+            hosts:
+              - "node-red.{{ $.Values.host | default `localhost` }}"
+
+  - name: iot-agent-json
+    enabled: true
+    source_path: helm-charts/iot-agent-json/chart
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+    values:
+      config:
+        iotaCbHost: scorpio
+        iotaCbPort: 9090
+        iotaMqttHost: emqx
+        iotaMqttPort: *mosquitto_port
+        iotaMongoHost: mongodb-orion
+        # Force strict LD mode for all incoming MQTT data
+        iotaCbNgsiVersion: "ld"
+        iotaJsonLdContext: "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+        iotaFallbackTenant: "airquality"
+        mongoAuth:
+          enabled: true
+          user: root
+          secretName: mongodb-orion
+          secretKey: mongodb-root-password
+
+  - name: orion-sync-unwrapper
+    enabled: true
+    source_path: helm-charts/orion-sync-unwrapper/chart
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+    values:
+      ingress:
+        enabled: true
+        className: traefik
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+        hosts:
+          - host: unwrapper.{{ $.Values.host | default `localhost` }}
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: unwrapper-tls
+            hosts:
+              - unwrapper.{{ $.Values.host | default `localhost` }}
+
+  - name: apisix
+    enabled: true
+    source_path: helm-charts/apisix/chart
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+    values:
+      config:
+        keycloakDiscoveryUrl: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/.well-known/openid-configuration"
+        existingSecret: cb-pep-credentials
+        existingSecretKey: client-secret
+      ingress:
+        enabled: true
+        className: traefik
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+        hosts:
+          - host: cb.{{ $.Values.host | default `localhost` }}
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: cb-tls
+            hosts:
+              - cb.{{ $.Values.host | default `localhost` }}
+

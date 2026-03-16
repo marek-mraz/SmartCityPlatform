@@ -19,6 +19,10 @@ secretsData:
     client-id: "mqtt-explorer"
     client-secret: "mqtt-explorer-oauth-secret-123"
     cookie-secret: "encrypted-cookie-secret-12345678"
+  emqx-dashboard-oauth2:
+    client-id: "emqx-dashboard"
+    client-secret: "emqx-dashboard-oauth-secret-123"
+    cookie-secret: "encrypted-cookie-secret-12345678"
   cb-pep-credentials:
     client-secret: "cb-pep-oauth-secret-123"
   ngsild-oauth:

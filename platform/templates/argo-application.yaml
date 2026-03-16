@@ -1,15 +1,12 @@
 {{- if .Values.applications }}
 {{- $secrets := .Values.secretsEnabled }}
 {{- $release := .Values.release }}
-{{- $source := .Values.source }}
 {{- $team := .Values.team }}
 {{- $host := .Values.host }}
 {{- $tlsSecret := .Values.tlsSecret }}
 {{- $argoNamespace := .Values.argoNamespace -}}
 {{- range $app := .Values.applications }}
-{{- if $app.source }}
-{{- $source = $app.source }}
-{{- end }}
+{{- $appSource := $app.source | default $.Values.source }}
 {{- if $app.enabled }}
 ---
 apiVersion: argoproj.io/v1alpha1
@@ -66,7 +63,7 @@ spec:
     {{- if .source_path }}
     path: {{ .source_path | default "." }}
     {{- end }}
-    repoURL: {{ $source }}
+    repoURL: {{ $appSource }}
     targetRevision: {{ .source_ref | default "main" | quote }}
     {{- if not .source_path }}
     chart: {{ .chart_name | default .name }}

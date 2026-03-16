@@ -454,6 +454,11 @@ applications:
                         "temporary": false
                       }
                     ]
+                  },
+                  {
+                    "username": "service-account-grafana-ngsild",
+                    "serviceAccountClientId": "grafana-ngsild",
+                    "realmRoles": [ "consumer", "producer", "admin"],
                   }
                 ],
                 "roles": {
@@ -560,10 +565,7 @@ applications:
     values:
       fullnameOverride: emqx
       service:
-        type: LoadBalancer
-        annotations:
-          load-balancer.hetzner.cloud/name: "emqx-lb"
-          load-balancer.hetzner.cloud/use-private-ip: "true"
+        type: ClusterIP
         mqtt: *mqtt_port
       emqxConfig:
         EMQX_ALLOW_ANONYMOUS: "true"
@@ -634,20 +636,20 @@ applications:
     - values.yaml
     values:
       config:
-                iotaCbHost: scorpio
-                iotaCbPort: 9090
-                iotaMqttHost: emqx
-                iotaMqttPort: *mqtt_port
-                iotaMongoHost: mongodb-iotagent
-                # Force strict LD mode for all incoming MQTT data
-                iotaCbNgsiVersion: "ld"
-                iotaJsonLdContext: "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
-                iotaFallbackTenant: "airquality"
-                mongoAuth:
-                  enabled: true
-                  user: root
-                  secretName: mongodb-iotagent
-                  secretKey: mongodb-root-password
+        iotaCbHost: scorpio
+        iotaCbPort: 9090
+        iotaMqttHost: emqx
+        iotaMqttPort: *mqtt_port
+        iotaMongoHost: mongodb-iotagent
+        # Force strict LD mode for all incoming MQTT data
+        iotaCbNgsiVersion: "ld"
+        iotaJsonLdContext: "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+        iotaFallbackTenant: "airquality"
+        mongoAuth:
+          enabled: true
+          user: root
+          secretName: mongodb-iotagent
+          secretKey: mongodb-root-password
 
   - name: orion-sync-unwrapper
     enabled: true

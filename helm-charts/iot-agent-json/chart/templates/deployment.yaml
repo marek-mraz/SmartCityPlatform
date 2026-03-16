@@ -57,6 +57,8 @@ spec:
               value: {{ .Values.config.iotaJsonLdContext | default "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" | quote }}
             - name: IOTA_FALLBACK_TENANT
               value: {{ .Values.config.iotaFallbackTenant | default "" | quote }}
+            - name: IOTA_PROVIDER_URL
+              value: "http://{{ include "iot-agent-json.fullname" . }}:{{ .Values.service.port }}"
             {{- if .Values.config.mongoAuth.enabled }}
             - name: _MONGO_PASSWORD
               valueFrom:

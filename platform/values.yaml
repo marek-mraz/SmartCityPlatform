@@ -286,6 +286,11 @@ applications:
                           secretKeyRef:
                             name: ngsild-oauth
                             key: client-secret
+                      - name: NODE_RED_NGSI_LD_CLIENT_SECRET
+                        valueFrom:
+                          secretKeyRef:
+                            name: node-red-ngsild
+                            key: client-secret
                       - name: CONSUMER_USER_PASSWORD
                         valueFrom:
                           secretKeyRef:
@@ -414,7 +419,20 @@ applications:
                     "publicClient": false,
                     "protocol": "openid-connect",
                     "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
+                  },
+                  {
+                    "clientId": "node-red-ngsild",
+                    "enabled": true,
+                    "clientAuthenticatorType": "client-secret",
+                    "secret": "$(env:NODE_RED_NGSI_LD_CLIENT_SECRET)",
+                    "serviceAccountsEnabled": true,
+                    "standardFlowEnabled": false,
+                    "directAccessGrantsEnabled": true,
+                    "publicClient": false,
+                    "protocol": "openid-connect",
+                    "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
                   }
+
                 ],
                 "users": [
                   {
@@ -458,6 +476,11 @@ applications:
                   {
                     "username": "service-account-grafana-ngsild",
                     "serviceAccountClientId": "grafana-ngsild",
+                    "realmRoles": [ "consumer", "producer", "admin"],
+                  },
+                  {
+                    "username": "service-account-node-red-ngsild",
+                    "serviceAccountClientId": "node-red-ngsild",
                     "realmRoles": [ "consumer", "producer", "admin"],
                   }
                 ],
@@ -564,11 +587,15 @@ applications:
     - values.yaml
     values:
       fullnameOverride: emqx
+      persistence:
+        enabled: true
+        size: 1Gi
       service:
         type: ClusterIP
         mqtt: *mqtt_port
       emqxConfig:
-        EMQX_ALLOW_ANONYMOUS: "true"
+        EMQX_ALLOW_ANONYMOUS: "false"
+        EMQX_ACL_NOMATCH: "deny"
 
   - name: emqx-oauth2-proxy
     enabled: true
@@ -702,4 +729,18 @@ applications:
           - secretName: cb-tls
             hosts:
               - cb.{{ $.Values.host | default `localhost` }}
+
+  - name: gitlab
+    enabled: false
+    chart_name: gitlab
+    source: https://charts.gitlab.io/
+    source_ref: "8.6.0"
+    destination: *destination
+    values:
+      global:
+        hosts:
+          domain: "{{ $.Values.host | default `localhost` }}"
+        edition: ce
+      certmanager-issuer:
+        email: admin@{{ $.Values.host | default `localhost` }}
 

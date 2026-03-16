@@ -31,3 +31,5 @@ secretsData:
     client-id: "node-red"
     client-secret: "node-red-oauth-secret-123"
     cookie-secret: "encrypted-cookie-secret-12345678"
+  node-red-ngsild:
+    client-secret: "node-red-ngsild-oauth-secret-123"

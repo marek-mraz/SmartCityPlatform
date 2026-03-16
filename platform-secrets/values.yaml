@@ -27,6 +27,8 @@ secretsData:
     client-secret: "RANDOM"
   ngsild-oauth:
     client-secret: "RANDOM"
+  node-red-ngsild:
+    client-secret: "RANDOM"
   node-red-oauth2:
     client-id: "node-red"
     client-secret: "RANDOM"

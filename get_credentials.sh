@@ -82,3 +82,9 @@ TSDB_PWD=$(kubectl -n fiware get secret tsdb-credentials -o jsonpath='{.data.pas
 echo "  User: admin"
 echo "  Pass: ${TSDB_PWD:-<Not Found>}"
 echo ""
+
+# Node-RED NGSILD
+echo "Node-RED NGSILD:"
+NODE_RED_NGSI_LD_CLIENT_SECRET=$(kubectl -n fiware get secret node-red-ngsild -o jsonpath='{.data.client-secret}' 2>/dev/null | base64 -d)
+echo "  Client Secret: ${NODE_RED_NGSI_LD_CLIENT_SECRET:-<Not Found>}"
+echo ""

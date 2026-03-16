@@ -1,10 +1,14 @@
-nameOverride: "mongodb-orion"
-fullnameOverride: "mongodb-orion"
+nameOverride: "mongodb-iotagent"
+fullnameOverride: "mongodb-iotagent"
+
+image:
+  repository: mongo
+  tag: "4.4"
 
 mongodb:
   global:
-    nameOverride: "mongodb-orion"
-    fullnameOverride: "mongodb-orion"
+    nameOverride: "mongodb-iotagent"
+    fullnameOverride: "mongodb-iotagent"
   architecture: replicaset
   podSecurityContext:
     enabled: false

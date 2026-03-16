@@ -1,0 +1,33 @@
+secretsData:
+  grafana-admin-user:
+    admin-user: "fiwareAdmin"
+    admin-password: "RANDOM"
+  keycloak-admin-credentials:
+    username: "admin"
+    password: "RANDOM"
+  admin-user-credentials:
+    password: "RANDOM"
+  consumer-user-credentials:
+    password: "RANDOM"
+  tsdb-credentials:
+    password: "RANDOM"
+  tsdb-password:
+    password: "RANDOM"
+  grafana-oauth:
+    client-secret: "RANDOM"
+  mqtt-explorer-oauth2:
+    client-id: "mqtt-explorer"
+    client-secret: "RANDOM"
+    cookie-secret: "RANDOM_HEX"
+  emqx-dashboard-oauth2:
+    client-id: "emqx-dashboard"
+    client-secret: "RANDOM"
+    cookie-secret: "RANDOM_HEX"
+  cb-pep-credentials:
+    client-secret: "RANDOM"
+  ngsild-oauth:
+    client-secret: "RANDOM"
+  node-red-oauth2:
+    client-id: "node-red"
+    client-secret: "RANDOM"
+    cookie-secret: "RANDOM_HEX"

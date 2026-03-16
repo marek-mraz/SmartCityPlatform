@@ -71,7 +71,7 @@ echo ""
 
 # MongoDB (Used by IoT Agent)
 echo "MongoDB:"
-MONGO_PWD=$(kubectl -n fiware get secret mongodb-orion -o jsonpath='{.data.mongodb-root-password}' 2>/dev/null | base64 -d)
+MONGO_PWD=$(kubectl -n fiware get secret mongodb-iotagent -o jsonpath='{.data.mongodb-root-password}' 2>/dev/null | base64 -d)
 echo "  User: root"
 echo "  Pass: ${MONGO_PWD:-test}"
 echo ""

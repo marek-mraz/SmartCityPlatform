@@ -88,6 +88,13 @@ spec:
       kind: GrafanaDataSource
       jsonPointers:
         - /spec/datasources/0/secureJsonData/httpHeaderValue1
+{{- if eq .name "platform-secrets" }}
+    - group: ""
+      kind: Secret
+      jsonPointers:
+        - /data
+        - /stringData
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

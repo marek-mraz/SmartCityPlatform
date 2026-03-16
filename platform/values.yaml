@@ -292,6 +292,11 @@ applications:
                           secretKeyRef:
                             name: admin-user-credentials
                             key: password
+                      - name: EMQX_DASHBOARD_CLIENT_SECRET
+                        valueFrom:
+                          secretKeyRef:
+                            name: emqx-dashboard-oauth2
+                            key: client-secret
                       - name: KEYCLOAK_AVAILABILITYCHECK_ENABLED
                         value: "true"
                       - name: KEYCLOAK_AVAILABILITYCHECK_TIMEOUT
@@ -530,6 +535,34 @@ applications:
       emqxConfig:
         EMQX_ALLOW_ANONYMOUS: "true"
 
+  - name: emqx-oauth2-proxy
+    enabled: true
+    chart_name: oauth2-proxy
+    source: https://oauth2-proxy.github.io/manifests
+    source_ref: "6.2.2"
+    destination: *destination
+    values:
+      config:
+        clientID: "emqx-dashboard"
+        existingSecret: "emqx-dashboard-oauth2"
+      extraArgs:
+        provider: "oidc"
+        oidc-issuer-url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server"
+        upstream: "http://emqx:18083"
+        email-domain: "*"
+        pass-access-token: "true"
+      ingress:
+        enabled: true
+        className: nginx
+        annotations:
+          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        hosts:
+          - "emqx.{{ $.Values.host | default `localhost` }}"
+        tls:
+          - secretName: emqx-tls
+            hosts:
+              - "emqx.{{ $.Values.host | default `localhost` }}"
+
   - name: node-red
     enabled: true
     source_path: helm-charts/node-red/chart
@@ -568,20 +601,20 @@ applications:
     - values.yaml
     values:
       config:
-        iotaCbHost: scorpio
-        iotaCbPort: 9090
-        iotaMqttHost: emqx
-        iotaMqttPort: *mosquitto_port
-        iotaMongoHost: mongodb-orion
-        # Force strict LD mode for all incoming MQTT data
-        iotaCbNgsiVersion: "ld"
-        iotaJsonLdContext: "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
-        iotaFallbackTenant: "airquality"
-        mongoAuth:
-          enabled: true
-          user: root
-          secretName: mongodb-orion
-          secretKey: mongodb-root-password
+                iotaCbHost: scorpio
+                iotaCbPort: 9090
+                iotaMqttHost: emqx
+                iotaMqttPort: *mosquitto_port
+                iotaMongoHost: mongodb-iotagent
+                # Force strict LD mode for all incoming MQTT data
+                iotaCbNgsiVersion: "ld"
+                iotaJsonLdContext: "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+                iotaFallbackTenant: "airquality"
+                mongoAuth:
+                  enabled: true
+                  user: root
+                  secretName: mongodb-iotagent
+                  secretKey: mongodb-root-password
 
   - name: orion-sync-unwrapper
     enabled: true

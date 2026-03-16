@@ -21,7 +21,7 @@ config:
   
   # MongoDB
   iotaRegistryType: mongodb
-  iotaMongoHost: mongodb-orion
+  iotaMongoHost: mongodb-iotagent
   iotaMongoPort: 27017
   iotaMongoDb: iotagentjson
   
@@ -29,5 +29,5 @@ config:
   mongoAuth:
     enabled: true
     user: root
-    # secretName: mongodb-orion
-    # secretKey: mongodb-root-password
+    secretName: mongodb-iotagent
+    secretKey: mongodb-root-password

@@ -27,13 +27,7 @@ applications:
     - values.yaml
     values:
       postgresql:
-        enabled: false
-        host: tsdb
-        port: 5432
-        user: *tsdbUser
-        database: postgres
-        existingSecret: tsdb-credentials
-        existingSecretPasswordKey: password
+        enabled: true
       fullnameOverride: scorpio
       nameOverride: scorpio
       ingress:
@@ -180,6 +174,14 @@ applications:
   - name: advanced-dashboards
     enabled: true
     source_path: helm-charts/advanced-dashboards/chart
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+
+  - name: mongodb
+    enabled: true
+    source_path: helm-charts/mongodb/chart
     source_ref: *branch
     destination: *destination
     helm_values:
@@ -524,9 +526,7 @@ applications:
     - values.yaml
     values:
       service:
-        type: LoadBalancer
-        annotations:
-          load-balancer.hetzner.cloud/location: fsn1
+        type: ClusterIP
       emqxConfig:
         EMQX_ALLOW_ANONYMOUS: "true"
 

@@ -1,5 +1,5 @@
-source: https://github.com/Mrazbb/SmartCity
-release: fiware
+source: &source https://github.com/marek-mraz/SmartCityPlatform
+release: &release fiware
 destination_namespace: &destination fiware
 mosquitto_port: &mosquitto_port 1883
 branch: &branch main
@@ -38,11 +38,10 @@ applications:
       nameOverride: scorpio
       ingress:
         enabled: true
-        className: traefik
+        className: nginx
         annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: websecure
-          traefik.ingress.kubernetes.io/router.tls: "true"
-          traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
         hosts:
           - host: scorpio.{{ $.Values.host | default `localhost` }}
             paths:
@@ -167,11 +166,10 @@ applications:
                   timescaledb: true
         ingress:
           enabled: true
-          ingressClassName: traefik
+          ingressClassName: nginx
           annotations:
-            traefik.ingress.kubernetes.io/router.entrypoints: websecure
-            traefik.ingress.kubernetes.io/router.tls: "true"
-            traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+            cert-manager.io/cluster-issuer: "letsencrypt-prod"
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
           hosts:
             - grafana.{{ $.Values.host | default `localhost` }}
           tls:
@@ -455,11 +453,10 @@ applications:
           enabled: false
       ingress:
         enabled: true
-        className: traefik
+        ingressClassName: nginx
         annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: websecure
-          traefik.ingress.kubernetes.io/router.tls: "true"
-          traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
         rules:
           - host: "auth.{{ $.Values.host | default `localhost` }}"
             paths:
@@ -507,11 +504,10 @@ applications:
           enabled: false
         ingress:
           enabled: true
-          ingressClassName: traefik
+          ingressClassName: nginx
           annotations:
-            traefik.ingress.kubernetes.io/router.entrypoints: websecure
-            traefik.ingress.kubernetes.io/router.tls: "true"
-            traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+            cert-manager.io/cluster-issuer: "letsencrypt-prod"
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
           hosts:
             - grafana-metrics.{{ $.Values.host | default `localhost` }}
           tls:
@@ -547,11 +543,10 @@ applications:
         oidcIssuerUrl: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server"
       ingress:
         enabled: true
-        className: traefik
+        className: nginx
         annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: websecure
-          traefik.ingress.kubernetes.io/router.tls: "true"
-          traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
         hosts:
           - host: "node-red.{{ $.Values.host | default `localhost` }}"
             paths:
@@ -596,11 +591,10 @@ applications:
     values:
       ingress:
         enabled: true
-        className: traefik
+        className: nginx
         annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: websecure
-          traefik.ingress.kubernetes.io/router.tls: "true"
-          traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
         hosts:
           - host: unwrapper.{{ $.Values.host | default `localhost` }}
             paths:
@@ -625,11 +619,10 @@ applications:
         existingSecretKey: client-secret
       ingress:
         enabled: true
-        className: traefik
+        className: nginx
         annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: websecure
-          traefik.ingress.kubernetes.io/router.tls: "true"
-          traefik.ingress.kubernetes.io/router.tls.certresolver: "le"
+          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
         hosts:
           - host: cb.{{ $.Values.host | default `localhost` }}
             paths:

@@ -186,7 +186,7 @@ startupProbe: |
     path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/health'
     port: '{{ .Values.http.internalPort }}'
     scheme: '{{ .Values.http.internalScheme }}'
-  initialDelaySeconds: 15
+  initialDelaySeconds: 60
   timeoutSeconds: 1
   failureThreshold: 60
   periodSeconds: 5

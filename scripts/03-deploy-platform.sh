@@ -1,7 +1,20 @@
 #!/usr/bin/env bash
 set -eo pipefail
 source "$(dirname "$0")/utils.sh"
+source "$(dirname "$0")/../.env"
 
+
+BRANCH=${BRANCH:-"main"}
+
+if [ -z "$DOMAIN" ]; then
+  echo "DOMAIN is not set"
+  exit 1
+fi
+
+if [ -z "$SOURCE" ]; then
+  echo "SOURCE is not set"
+  exit 1
+fi
 
 check_dependency "helm"
 check_dependency "kubectl"
@@ -10,12 +23,14 @@ check_dependency "kubectl"
 log_info "Deploying Platform Umbrella Chart (ArgoCD Applications)..."
 # Load .env if present[ -f "$(dirname "$0")/../.env" ] && source "$(dirname "$0")/../.env"
 DOMAIN=${DOMAIN:-"example.com"}
+SOURCE_URL=${SOURCE:-"https://github.com/Mrazbb/SmartCity"}
+BRANCH=${BRANCH:-"main"}
 
 # Render the umbrella chart and apply it as ArgoCD Application CRDs
 helm template fiware-platform "$(dirname "$0")/../platform" \
   --set host="${DOMAIN}" \
-  --set source=https://github.com/Mrazbb/SmartCity \
-  --set branch=main \
+  --set source="${SOURCE_URL}" \
+  --set branch="${BRANCH}" \
   --set destination_namespace=fiware \
   --namespace argocd | kubectl apply -n argocd -f -
 

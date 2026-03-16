@@ -1,7 +1,7 @@
 source: &source https://github.com/marek-mraz/SmartCityPlatform
 release: &release fiware
 destination_namespace: &destination fiware
-mosquitto_port: &mosquitto_port 1883
+mqtt_port: &mqtt_port 1883
 branch: &branch main
 secretsEnabled: &secretsEnabled true
 keycloakEnabled: &keycloakEnabled true
@@ -186,6 +186,10 @@ applications:
     destination: *destination
     helm_values:
     - values.yaml
+    values:
+      mongodb:
+        auth:
+          rootPassword: "test"
 
   - name: keycloak
     enabled: *keycloakEnabled
@@ -373,6 +377,21 @@ applications:
                     "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
                   },
                   {
+                    "clientId": "emqx-dashboard",
+                    "enabled": true,
+                    "clientAuthenticatorType": "client-secret",
+                    "secret": "$(env:EMQX_DASHBOARD_CLIENT_SECRET)",
+                    "standardFlowEnabled": true,
+                    "directAccessGrantsEnabled": true,
+                    "redirectUris": [
+                      "https://emqx.{{ $.Values.host | default `localhost` }}/*"
+                    ],
+                    "webOrigins": ["+"],
+                    "publicClient": false,
+                    "protocol": "openid-connect",
+                    "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
+                  },
+                  {
                     "clientId": "apisix-pep",
                     "enabled": true,
                     "clientAuthenticatorType": "client-secret",
@@ -409,7 +428,7 @@ applications:
                     "credentials": [
                       {
                         "type": "password",
-                        "value": "${CONSUMER_USER_PASSWORD}",
+                        "value": "$(env:CONSUMER_USER_PASSWORD)",
                         "temporary": false
                       }
                     ],
@@ -427,10 +446,11 @@ applications:
                     "firstName": "Admin",
                     "lastName": "User",
                     "requiredActions": [],
+                    "realmRoles": ["admin"],
                     "credentials": [
                       {
                         "type": "password",
-                        "value": "${ADMIN_USER_PASSWORD}",
+                        "value": "$(env:ADMIN_USER_PASSWORD)",
                         "temporary": false
                       }
                     ]
@@ -438,7 +458,15 @@ applications:
                 ],
                 "roles": {
                   "realm": [
-                    { "name": "admin" },
+                    { "name": "admin",
+                      "composite": true,
+                      "composites": {
+                        "client": {
+                          "grafana": ["Admin"],
+                          "apisix-pep": ["admin"]
+                        }
+                      }
+                    },
                     { "name": "consumer" },
                     { "name": "producer" }
                   ],
@@ -530,8 +558,13 @@ applications:
     helm_values:
     - values.yaml
     values:
+      fullnameOverride: emqx
       service:
-        type: ClusterIP
+        type: LoadBalancer
+        annotations:
+          load-balancer.hetzner.cloud/name: "emqx-lb"
+          load-balancer.hetzner.cloud/use-private-ip: "true"
+        mqtt: *mqtt_port
       emqxConfig:
         EMQX_ALLOW_ANONYMOUS: "true"
 
@@ -604,7 +637,7 @@ applications:
                 iotaCbHost: scorpio
                 iotaCbPort: 9090
                 iotaMqttHost: emqx
-                iotaMqttPort: *mosquitto_port
+                iotaMqttPort: *mqtt_port
                 iotaMongoHost: mongodb-iotagent
                 # Force strict LD mode for all incoming MQTT data
                 iotaCbNgsiVersion: "ld"

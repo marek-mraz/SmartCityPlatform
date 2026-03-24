@@ -1,0 +1,19 @@
+{{- range $i, $u := .Values.users }}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: {{ $u.name }}
+  labels:
+    strimzi.io/cluster: {{ include "kafka.clusterName" $ }}
+    {{- include "kafka.labels" $ | nindent 4 }}
+spec:
+  {{- if $u.authentication }}
+  authentication:
+    {{- toYaml $u.authentication | nindent 4 }}
+  {{- end }}
+  {{- if $u.authorization }}
+  authorization:
+    {{- toYaml $u.authorization | nindent 4 }}
+  {{- end }}
+{{- end }}

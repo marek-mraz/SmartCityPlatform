@@ -55,6 +55,8 @@ spec:
               value: "jdbc:postgresql://{{ if .Values.postgresql.enabled }}{{ include "scorpioBroker-aaio.fullname" . }}-postgres{{ else }}{{ .Values.postgresql.host }}{{ end }}:{{ .Values.postgresql.port }}/{{ .Values.postgresql.database }}?ApplicationName=aio-runner"
             - name: QUARKUS_DATASOURCE_REACTIVE_URL
               value: "postgresql://{{ if .Values.postgresql.enabled }}{{ include "scorpioBroker-aaio.fullname" . }}-postgres{{ else }}{{ .Values.postgresql.host }}{{ end }}:{{ .Values.postgresql.port }}/{{ .Values.postgresql.database }}?ApplicationName=aio-runner"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ if .Values.kafka.enabled }}"{{ include "scorpioBroker-aaio.fullname" . }}-kafka:9092"{{ else }}"{{ .Values.kafka.bootstrapServers }}"{{ end }}
           ports:
             - containerPort: 9090
               protocol: TCP

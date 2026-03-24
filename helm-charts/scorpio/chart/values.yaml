@@ -13,6 +13,10 @@ postgresql:
   password: "ngb"
   database: "ngb"
 
+kafka:
+  enabled: true
+  bootstrapServers: ""
+
 image:
   repository: scorpiobroker/all-in-one-runner
   pullPolicy: IfNotPresent

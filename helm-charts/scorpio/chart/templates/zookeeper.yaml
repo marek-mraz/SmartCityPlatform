@@ -1,0 +1,44 @@
+{{- if .Values.kafka.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "scorpioBroker-aaio.fullname" . }}-zookeeper
+  labels:
+    {{- include "scorpioBroker-aaio.labels" . | nindent 4 }}
+    app.kubernetes.io/component: zookeeper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "scorpioBroker-aaio.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: zookeeper
+  template:
+    metadata:
+      labels:
+        {{- include "scorpioBroker-aaio.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: zookeeper
+    spec:
+      containers:
+      - image: zookeeper:3.8
+        imagePullPolicy: IfNotPresent
+        name: zookeeper
+        ports:
+        - containerPort: 2181
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "scorpioBroker-aaio.fullname" . }}-zookeeper
+  labels:
+    {{- include "scorpioBroker-aaio.labels" . | nindent 4 }}
+    app.kubernetes.io/component: zookeeper
+spec:
+  ports:
+  - name: "2181"
+    port: 2181
+    targetPort: 2181
+  selector:
+    {{- include "scorpioBroker-aaio.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: zookeeper
+{{- end }}

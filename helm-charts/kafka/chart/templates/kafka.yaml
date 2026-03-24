@@ -1,0 +1,84 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: controllers
+  labels:
+    strimzi.io/cluster: {{ include "kafka.clusterName" . }}
+    app.kubernetes.io/component: controller
+    {{- include "kafka.labels" $ | nindent 4 }}
+spec:
+  replicas: {{ .Values.controller.replicas }}
+  roles:
+    - controller
+  storage:
+    type: persistent-claim
+    size: 10Gi
+    deleteClaim: false
+  {{- if .Values.controller.resources }}
+  resources:
+    {{- toYaml .Values.controller.resources | nindent 4 }}
+  {{- end }}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: brokers
+  labels:
+    strimzi.io/cluster: {{ include "kafka.clusterName" . }}
+    app.kubernetes.io/component: broker
+    {{- include "kafka.labels" $ | nindent 4 }}
+spec:
+  replicas: {{ .Values.broker.replicas }}
+  roles:
+    - broker
+  storage:
+    type: persistent-claim
+    size: 5Gi
+    deleteClaim: false
+  {{- if .Values.broker.resources }}
+  resources:
+    {{- toYaml .Values.broker.resources | nindent 4 }}
+  {{- end }}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: {{ include "kafka.clusterName" . }}
+  labels:
+    strimzi.io/cluster: {{ include "kafka.clusterName" . }}
+    app.kubernetes.io/component: kafka
+    {{- include "kafka.labels" $ | nindent 4 }}
+
+spec:
+  kafka:
+    template:
+      pod:
+        metadata:
+          annotations:
+            config.linkerd.io/skip-outbound-ports: "8443,9090,9091"
+            config.linkerd.io/skip-inbound-ports: "8443,9090,9091"
+            config.linkerd.io/opaque-ports: "9092"
+      bootstrapService:
+        metadata:
+          annotations:
+            config.linkerd.io/opaque-ports: "9092"
+      brokersService:
+        metadata:
+          annotations:
+            config.linkerd.io/opaque-ports: "9092"
+    version: {{ .Values.kafkaVersion }}
+    metadataVersion: 4.1-IV1
+    listeners:
+      {{- toYaml .Values.kafka.listeners | nindent 6 }}
+    {{- if .Values.kafka.config }}
+    config:
+      {{- toYaml .Values.kafka.config | nindent 6 }}
+    {{- end }}
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+    template:
+      pod:
+        metadata:
+          annotations:
+            config.linkerd.io/skip-outbound-ports: "9091"

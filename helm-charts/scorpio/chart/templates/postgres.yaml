@@ -25,11 +25,18 @@ spec:
             - containerPort: 5432
           env:
             - name: POSTGRES_USER
-              value: "ngb"
+              value: {{ .Values.postgresql.user | quote }}
             - name: POSTGRES_PASSWORD
-              value: "ngb"
+              {{- if .Values.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.existingSecret }}
+                  key: {{ .Values.postgresql.existingSecretPasswordKey | default "password" }}
+              {{- else }}
+              value: {{ .Values.postgresql.password | quote }}
+              {{- end }}
             - name: POSTGRES_DB
-              value: "ngb"
+              value: {{ .Values.postgresql.database | quote }}
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data

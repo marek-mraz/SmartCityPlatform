@@ -1,0 +1,29 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "kafka.clusterName" . }}
+  labels:
+    {{- include "kafka.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      strimzi.io/cluster: {{ include "kafka.clusterName" . }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apicurio
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: portal
+              app.kubernetes.io/component: backend
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: kafka-ui
+{{- end }}

@@ -1,0 +1,94 @@
+---
+# Values for Strimzi-based Kafka cluster
+
+# Kafka cluster identity
+clusterName: kafka-cluster
+kafkaVersion: 4.1.0
+
+controller:
+  replicas: 1
+  resources:
+    requests:
+      cpu: '500m'
+      memory: '1Gi'
+    limits:
+      cpu: '1'
+      memory: '2Gi'
+
+broker:
+  replicas: 1
+  resources:
+    requests:
+      cpu: '500m'
+      memory: '2Gi'
+    limits:
+      cpu: '2'
+      memory: '8Gi'
+
+kafka:
+  # Listener presets; adjust as needed
+  listeners:
+    - name: internal
+      port: 9092
+      type: internal
+      tls: true
+    - name: external
+      port: 9094
+      type: nodeport
+      tls: true
+      configuration:
+        bootstrap:
+          nodePort: null
+        brokers: []
+  config: # we gradually add more default configs here
+    num.network.threads: 3
+    num.io.threads: 8
+    num.replica.fetchers: 2
+    log.retention.ms: 2592000000 # 30d default
+    queued.max.requests: 500
+    auto.create.topics.enable: 'true'
+    # TODO: make these defaults overridable via values.yaml or set via replica count
+    offsets.topic.replication.factor: 1
+    transaction.state.log.replication.factor: 1
+    transaction.state.log.min.isr: 1
+    default.replication.factor: 1
+    min.insync.replicas: 1
+
+# Optional topics to create
+# topics:
+#   - name: example
+#     partitions: 12
+#     replicas: 3
+#     config:
+#       retention.ms: 604800000
+#       cleanup.policy: delete
+
+topics: []
+
+# Optional users to create
+# users:
+#   - name: my-app
+#     authentication:
+#       type: tls
+#     authorization:
+#       type: simple
+#       acls:
+#         - resource:
+#             type: topic
+#             name: my-topic
+#             patternType: literal
+#           operation: Read
+#         - resource:
+#             type: group
+#             name: my-group
+#             patternType: literal
+#           operation: Read
+users: []
+
+# Custom Service Mesh configuration
+customServiceMesh:
+  enable: false
+  type: ''
+
+networkPolicy:
+  enabled: false

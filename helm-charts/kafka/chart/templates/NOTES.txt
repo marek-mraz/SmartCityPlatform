@@ -1,0 +1,22 @@
+This chart deploys a Kafka cluster managed by the Strimzi operator.
+
+Prerequisites:
+- Strimzi operator CRDs installed in the cluster
+- Strimzi operator running and watching this namespace
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+Cluster Name: {{ include "kafka.clusterName" . }}
+
+To check the Kafka cluster status:
+  kubectl get kafka {{ include "kafka.clusterName" . }} -n {{ .Release.Namespace }} -o yaml | yq e '.status' -
+
+Bootstrap addresses (when ready):
+- Internal: {{ include "kafka.clusterName" . }}-kafka-bootstrap.{{ .Release.Namespace }}.svc:9092
+- External (if enabled): see service {{ include "kafka.clusterName" . }}-kafka-external-bootstrap
+
+To list topics created by this chart:
+  kubectl get kafkatopics.kafka.strimzi.io -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+To list users created by this chart:
+  kubectl get kafkausers.kafka.strimzi.io -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}

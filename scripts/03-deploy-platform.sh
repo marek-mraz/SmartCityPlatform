@@ -26,6 +26,18 @@ DOMAIN=${DOMAIN:-"example.com"}
 SOURCE_URL=${SOURCE:-"https://github.com/Mrazbb/SmartCity"}
 BRANCH=${BRANCH:-"main"}
 
+log_info "Checking if ArgoCD is installed..."
+if ! kubectl get customresourcedefinition applications.argoproj.io >/dev/null 2>&1; then
+  log_info "ArgoCD CRDs not found. Installing ArgoCD..."
+  kubectl get namespace argocd >/dev/null 2>&1 || kubectl create namespace argocd
+  kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+  
+  log_info "Waiting for ArgoCD CRDs to be established..."
+  kubectl wait --for=condition=established --timeout=120s crd/applications.argoproj.io || true
+else
+  log_info "ArgoCD is already installed."
+fi
+
 # Render the umbrella chart and apply it as ArgoCD Application CRDs
 helm template fiware-platform "$(dirname "$0")/../platform" \
   --set host="${DOMAIN}" \

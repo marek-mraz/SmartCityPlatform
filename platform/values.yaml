@@ -8,6 +8,7 @@ keycloakEnabled: &keycloakEnabled true
 host: &host example.com
 tlsSecret: &tlsSecret
 tsdbUser: &tsdbUser admin
+ingressClassName: &ingressClassName traefik
 
 applications:
   - name: platform-secrets
@@ -32,10 +33,10 @@ applications:
       nameOverride: scorpio
       ingress:
         enabled: true
-        className: nginx
+        className: *ingressClassName
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt-prod"
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
           - host: scorpio.{{ $.Values.host | default `localhost` }}
             paths:
@@ -160,10 +161,10 @@ applications:
                   timescaledb: true
         ingress:
           enabled: true
-          ingressClassName: nginx
+          ingressClassName: *ingressClassName
           annotations:
             cert-manager.io/cluster-issuer: "letsencrypt-prod"
-            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+            traefik.ingress.kubernetes.io/router.tls: "true"
           hosts:
             - grafana.{{ $.Values.host | default `localhost` }}
           tls:
@@ -516,10 +517,10 @@ applications:
           enabled: false
       ingress:
         enabled: true
-        ingressClassName: nginx
+        ingressClassName: *ingressClassName
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt-prod"
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          traefik.ingress.kubernetes.io/router.tls: "true"
         rules:
           - host: "auth.{{ $.Values.host | default `localhost` }}"
             paths:
@@ -567,10 +568,10 @@ applications:
           enabled: false
         ingress:
           enabled: true
-          ingressClassName: nginx
+          ingressClassName: *ingressClassName
           annotations:
             cert-manager.io/cluster-issuer: "letsencrypt-prod"
-            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+            traefik.ingress.kubernetes.io/router.tls: "true"
           hosts:
             - grafana-metrics.{{ $.Values.host | default `localhost` }}
           tls:
@@ -615,9 +616,11 @@ applications:
         pass-access-token: "true"
       ingress:
         enabled: true
-        className: nginx
+        className: *ingressClassName
+        ingressClassName: *ingressClassName
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
           - "emqx.{{ $.Values.host | default `localhost` }}"
         tls:
@@ -640,10 +643,10 @@ applications:
         oidcIssuerUrl: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server"
       ingress:
         enabled: true
-        className: nginx
+        className: *ingressClassName
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt-prod"
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
           - host: "node-red.{{ $.Values.host | default `localhost` }}"
             paths:
@@ -688,10 +691,10 @@ applications:
     values:
       ingress:
         enabled: true
-        className: nginx
+        className: *ingressClassName
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt-prod"
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
           - host: unwrapper.{{ $.Values.host | default `localhost` }}
             paths:
@@ -716,10 +719,10 @@ applications:
         existingSecretKey: client-secret
       ingress:
         enabled: true
-        className: nginx
+        className: *ingressClassName
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt-prod"
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
           - host: cb.{{ $.Values.host | default `localhost` }}
             paths:

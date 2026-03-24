@@ -1,35 +1,35 @@
 secretsData:
   grafana-admin-user:
     admin-user: "fiwareAdmin"
-    admin-password: "fiwareAdminPassword123"
+    admin-password: "GENERATE"
   keycloak-admin-credentials:
     username: "admin"
-    password: "keycloakAdminPassword123"
+    password: "GENERATE"
   admin-user-credentials:
-    password: "adminUserPassword123"
+    password: "GENERATE"
   consumer-user-credentials:
-    password: "consumerUserPassword123"
+    password: "GENERATE"
   tsdb-credentials:
-    password: "tsdbPassword123"
+    password: "GENERATE"
   tsdb-password:
-    password: "tsdbPassword123"
+    password: "GENERATE"
   grafana-oauth:
-    client-secret: "grafana-oauth-secret-123"
+    client-secret: "GENERATE"
   mqtt-explorer-oauth2:
     client-id: "mqtt-explorer"
-    client-secret: "mqtt-explorer-oauth-secret-123"
-    cookie-secret: "encrypted-cookie-secret-12345678"
+    client-secret: "GENERATE"
+    cookie-secret: "GENERATE_HEX"
   emqx-dashboard-oauth2:
     client-id: "emqx-dashboard"
-    client-secret: "emqx-dashboard-oauth-secret-123"
-    cookie-secret: "encrypted-cookie-secret-12345678"
+    client-secret: "GENERATE"
+    cookie-secret: "GENERATE_HEX"
   cb-pep-credentials:
-    client-secret: "cb-pep-oauth-secret-123"
+    client-secret: "GENERATE"
   ngsild-oauth:
-    client-secret: "ngsild-oauth-secret-123"
+    client-secret: "GENERATE"
   node-red-oauth2:
     client-id: "node-red"
-    client-secret: "node-red-oauth-secret-123"
-    cookie-secret: "encrypted-cookie-secret-12345678"
+    client-secret: "GENERATE"
+    cookie-secret: "GENERATE_HEX"
   node-red-ngsild:
-    client-secret: "node-red-ngsild-oauth-secret-123"
+    client-secret: "GENERATE"

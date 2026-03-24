@@ -179,7 +179,7 @@ ingress:
   className: ""
   # -- Additional ingress annotations
   annotations: {}
-    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/ingress.class: *ingressClassName
     # kubernetes.io/tls-acme: "true"
   hosts:
     #  Ingress accepted hostnames

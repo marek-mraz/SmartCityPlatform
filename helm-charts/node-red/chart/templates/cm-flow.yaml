@@ -1,0 +1,28 @@
+{{- if .Values.flowTemplate.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "node-red.fullname" . | default "node-red" }}-flow
+data:
+  flows.json: |[
+        {
+            "id": "4a773b3d465ce756",
+            "type": "function",
+            "z": "df06c32dc7d3c5c2",
+            "name": "function 1",
+            "func": "// 1. Grab the token directly from the successful OAuth2 response!\nconst token = msg.oauth2Response.access_token;\n\n// 2. Set the URL of your Context Broker API\nmsg.url = \"{{ .Values.flowTemplate.contextBrokerUrl }}/ngsi-ld/v1/entities/?type=AirQualityObserved&options=keyValues\";\n\n// 3. Set the HTTP Method\nmsg.method = \"GET\";\n\n// 4. Set the Headers with your fresh token\nmsg.headers = {\n    \"Authorization\": \"Bearer \" + token,\n    \"Accept\": \"application/json\",\n    \"NGSILD-Tenant\": \"airquality\",\n    \"NGSILD-Path\" : \"/#\"\n\n};\n\nreturn msg;",
+            "outputs": 1,
+            "timeout": 0,
+            "noerr": 0,
+            "initialize": "",
+            "finalize": "",
+            "libs": [],
+            "x": 380,
+            "y": 220,
+            "wires": [[
+                    "e7c57cd0a16e6626"
+                ]
+            ]
+        }
+    ]
+{{- end }}

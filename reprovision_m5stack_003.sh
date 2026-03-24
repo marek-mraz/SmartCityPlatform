@@ -1,23 +1,5 @@
 #!/bin/bash
 
-echo "Starting port-forward for iot-agent-json..."
-kubectl -n fiware port-forward svc/iot-agent-json 4041:4041 > iot_agent_pf.log 2>&1 &
-PF_IOT_PID=$!
-
-echo "Starting port-forward for Scorpio..."
-SCORPIO_POD=$(kubectl -n fiware get pods -l 'app.kubernetes.io/name=scorpio,app.kubernetes.io/instance=scorpio,!app.kubernetes.io/component' -o name | head -n 1)
-kubectl -n fiware port-forward $SCORPIO_POD 9090:9090 > scorpio_pf.log 2>&1 &
-KUBE_PROXY_PID=$!
-
-# Wait for IOTA and Scorpio to be reachable
-echo "Waiting for port-forwards to be established..."
-for i in {1..15}; do
-  if curl -s http://localhost:4041 > /dev/null && curl -s http://localhost:9090 > /dev/null; then
-    break
-  fi
-  sleep 1
-done
-
 TENANT="airquality"
 FIWARE_SERVICEPATH="/data"
 DEVICE_ID="M5Stack003"
@@ -25,29 +7,54 @@ ENTITY_ID="urn:ngsi-ld:AirQualityObserved:M5Stack:003"
 ENTITY_TYPE="AirQualityObserved"
 CONTEXT="https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.3.jsonld"
 
-# The Kube Proxy URL routes directly through the K8s API to the Scorpio service
 SCORPIO_URL="http://localhost:9090"
-
-
-
-# -------------------------------------------------------------------------
-# 0. Setup EMQX Rules for Sparkplug B
-# -------------------------------------------------------------------------
-echo -e "\n\n0. Setting up EMQX Rules for Sparkplug B..."
 
 echo "Starting port-forward for EMQX API..."
 kubectl -n fiware port-forward svc/emqx 18083:18083 > emqx_pf.log 2>&1 &
 EMQX_PF_PID=$!
 
 echo "Waiting for EMQX port-forward..."
+EMQX_PF_SUCCESS=false
 for i in {1..15}; do
   if curl -s http://localhost:18083 > /dev/null; then
+    EMQX_PF_SUCCESS=true
     break
   fi
   sleep 1
 done
 
+if[ "$EMQX_PF_SUCCESS" = false ]; then
+  echo "Error: Failed to establish EMQX port-forward. Check emqx_pf.log"
+  kill $EMQX_PF_PID 2>/dev/null
+  exit 1
+fi
+
 EMQX_PWD=$(kubectl -n fiware get secret emqx-dashboard-credentials -o jsonpath='{.data.EMQX_DASHBOARD__DEFAULT_PASSWORD}' | base64 -d)
+
+echo -e "\n\n0. Setting up EMQX Authentication and Users..."
+curl -s -u "admin:${EMQX_PWD}" -X POST "http://localhost:18083/api/v5/authentication" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "mechanism": "password_based",
+    "backend": "built_in_database",
+    "user_id_type": "clientid"
+  }' > /dev/null
+
+curl -s -u "admin:${EMQX_PWD}" -X POST "http://localhost:18083/api/v5/authentication/password_based:built_in_database/users" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "iot_agent",
+    "password": "iot_password"
+  }' > /dev/null || true
+
+curl -s -u "admin:${EMQX_PWD}" -X POST "http://localhost:18083/api/v5/authentication/password_based:built_in_database/users" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "'${DEVICE_ID}'",
+    "password": "device_secret"
+  }' > /dev/null || true
+
+echo -e "\n\n0. Setting up EMQX Rules for Sparkplug B..."
 
 # Rule 1: JSON to Sparkplug B (Protobuf)
 curl -s -u "admin:${EMQX_PWD}" -X POST "http://localhost:18083/api/v5/rules" \
@@ -72,7 +79,7 @@ curl -s -u "admin:${EMQX_PWD}" -X POST "http://localhost:18083/api/v5/rules" \
   -d @- > /dev/null <<EOF
 {
   "name": "SparkplugB_to_IoTAgent",
-  "sql": "SELECT jq('.metrics | map({(.name): .value}) | add', spb_decode(payload)) as payload FROM \"spBv1.0/SmartCity/DDATA/M5Stack003\"",
+  "sql": "SELECT json_encode(first(jq('.metrics | map({(.name): .value}) | add', spb_decode(payload)))) as payload FROM \"spBv1.0/SmartCity/DDATA/M5Stack003\"",
   "actions":[{
     "function": "republish",
     "args": {
@@ -82,6 +89,36 @@ curl -s -u "admin:${EMQX_PWD}" -X POST "http://localhost:18083/api/v5/rules" \
   }]
 }
 EOF
+
+echo "Restarting IoT Agent to apply potential connection fixes..."
+kubectl -n fiware rollout restart deploy/iot-agent-json
+kubectl -n fiware rollout status deploy/iot-agent-json
+
+echo "Starting port-forward for iot-agent-json..."
+kubectl -n fiware port-forward svc/iot-agent-json 4041:4041 > iot_agent_pf.log 2>&1 &
+PF_IOT_PID=$!
+
+echo "Starting port-forward for Scorpio..."
+kubectl -n fiware port-forward svc/scorpio 9090:9090 > scorpio_pf.log 2>&1 &
+KUBE_PROXY_PID=$!
+
+echo "Waiting for IOTA and Scorpio port-forwards..."
+PF_SUCCESS=false
+for i in {1..15}; do
+  if curl -s http://localhost:4041 > /dev/null && curl -s http://localhost:9090 > /dev/null; then
+    PF_SUCCESS=true
+    break
+  fi
+  sleep 1
+done
+
+if[ "$PF_SUCCESS" = false ]; then
+  echo "Error: Failed to establish port-forwards. Check scorpio_pf.log and iot_agent_pf.log"
+  kill $PF_IOT_PID 2>/dev/null
+  kill $KUBE_PROXY_PID 2>/dev/null
+  kill $EMQX_PF_PID 2>/dev/null
+  exit 1
+fi
 
 # -------------------------------------------------------------------------
 # 0.5 Cleanup existing resources (Teardown)

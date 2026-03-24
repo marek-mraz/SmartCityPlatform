@@ -12,6 +12,8 @@
 // MQTT Settings
 #define MQTT_SERVER "smartcity.marek-mraz.com"
 #define MQTT_PORT 1883
+#define MQTT_USER "M5Stack003"
+#define MQTT_PASS "device_secret"
 
 // FIWARE IoT Agent Settings
 // FIWARE_API_KEY moved to secrets.h

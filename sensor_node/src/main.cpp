@@ -66,7 +66,7 @@ bool connectMQTT() {
     int retries = 0;
     while (!mqttClient.connected() && retries < MAX_MQTT_RETRIES) {
         Serial.print("Connecting to MQTT...");
-        if (mqttClient.connect(DEVICE_ID)) {
+        if (mqttClient.connect(DEVICE_ID, MQTT_USER, MQTT_PASS)) {
             Serial.println("connected");
             return true;
         } else {

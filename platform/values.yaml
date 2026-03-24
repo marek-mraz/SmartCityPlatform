@@ -717,6 +717,8 @@ applications:
         iotaCbPort: 9090
         iotaMqttHost: emqx
         iotaMqttPort: *mqtt_port
+        iotaMqttUsername: "iot_agent"
+        iotaMqttPassword: "iot_password"
         iotaMongoHost: mongodb-iotagent
         # Force strict LD mode for all incoming MQTT data
         iotaCbNgsiVersion: "ld"

@@ -35,7 +35,7 @@ applications:
         enabled: true
         className: *ingressClassName
         annotations:
-          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
           - host: scorpio.{{ $.Values.host | default `localhost` }}
@@ -43,8 +43,7 @@ applications:
               - path: /
                 pathType: Prefix
         tls:
-          - secretName: scorpio-tls
-            hosts:
+          - hosts:
               - scorpio.{{ $.Values.host | default `localhost` }}
 
 
@@ -163,13 +162,12 @@ applications:
           enabled: true
           ingressClassName: *ingressClassName
           annotations:
-            cert-manager.io/cluster-issuer: "letsencrypt-prod"
+            traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
             traefik.ingress.kubernetes.io/router.tls: "true"
           hosts:
             - grafana.{{ $.Values.host | default `localhost` }}
           tls:
-            - secretName: grafana-tls
-              hosts:
+          - hosts:
                 - grafana.{{ $.Values.host | default `localhost` }}
 
   - name: advanced-dashboards
@@ -571,7 +569,7 @@ applications:
         enabled: true
         ingressClassName: *ingressClassName
         annotations:
-          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         rules:
           - host: "auth.{{ $.Values.host | default `localhost` }}"
@@ -581,7 +579,6 @@ applications:
         tls:
           - hosts:
               - "auth.{{ $.Values.host | default `localhost` }}"
-            secretName: keycloak-tls
 
 
 
@@ -622,13 +619,12 @@ applications:
           enabled: true
           ingressClassName: *ingressClassName
           annotations:
-            cert-manager.io/cluster-issuer: "letsencrypt-prod"
+            traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
             traefik.ingress.kubernetes.io/router.tls: "true"
           hosts:
             - grafana-metrics.{{ $.Values.host | default `localhost` }}
           tls:
-            - secretName: grafana-metrics-tls
-              hosts:
+          - hosts:
                 - grafana-metrics.{{ $.Values.host | default `localhost` }}
 
   - name: emqx
@@ -671,13 +667,12 @@ applications:
         className: *ingressClassName
         ingressClassName: *ingressClassName
         annotations:
-          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
           - "emqx.{{ $.Values.host | default `localhost` }}"
         tls:
-          - secretName: emqx-tls
-            hosts:
+          - hosts:
               - "emqx.{{ $.Values.host | default `localhost` }}"
 
   - name: node-red
@@ -697,7 +692,7 @@ applications:
         enabled: true
         className: *ingressClassName
         annotations:
-          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
           - host: "node-red.{{ $.Values.host | default `localhost` }}"
@@ -705,8 +700,7 @@ applications:
               - path: /
                 pathType: Prefix
         tls:
-          - secretName: node-red-tls
-            hosts:
+          - hosts:
               - "node-red.{{ $.Values.host | default `localhost` }}"
 
   - name: iot-agent-json
@@ -745,7 +739,7 @@ applications:
         enabled: true
         className: *ingressClassName
         annotations:
-          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
           - host: unwrapper.{{ $.Values.host | default `localhost` }}
@@ -753,8 +747,7 @@ applications:
               - path: /
                 pathType: Prefix
         tls:
-          - secretName: unwrapper-tls
-            hosts:
+          - hosts:
               - unwrapper.{{ $.Values.host | default `localhost` }}
 
   - name: apisix
@@ -773,7 +766,7 @@ applications:
         enabled: true
         className: *ingressClassName
         annotations:
-          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
           - host: cb.{{ $.Values.host | default `localhost` }}
@@ -781,8 +774,7 @@ applications:
               - path: /
                 pathType: Prefix
         tls:
-          - secretName: cb-tls
-            hosts:
+          - hosts:
               - cb.{{ $.Values.host | default `localhost` }}
 
   - name: gitlab

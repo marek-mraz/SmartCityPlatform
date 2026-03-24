@@ -11,7 +11,7 @@ service:
 
 postgresql:
   password: password
-  user: admin
+  user: postgres
   database: postgres
 
 persistence:

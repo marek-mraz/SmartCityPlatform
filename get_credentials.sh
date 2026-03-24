@@ -59,6 +59,13 @@ echo "  User: ${KC_USER:-<Not Found>}"
 echo "  Pass: ${KC_PWD:-<Not Found>}"
 echo ""
 
+# Keycloak DB
+echo "Keycloak DB:"
+KC_DB_PWD=$(kubectl -n fiware get secret keycloak-db-credentials -o jsonpath='{.data.password}' 2>/dev/null | base64 -d)
+echo "  User: keycloak"
+echo "  Pass: ${KC_DB_PWD:-<Not Found>}"
+echo ""
+
 # Keycloak App Users
 echo "Keycloak App Users:"
 ADMIN_USER_PWD=$(kubectl -n fiware get secret admin-user-credentials -o jsonpath='{.data.password}' 2>/dev/null | base64 -d)
@@ -79,7 +86,7 @@ echo ""
 # TimescaleDB
 echo "TimescaleDB:"
 TSDB_PWD=$(kubectl -n fiware get secret tsdb-credentials -o jsonpath='{.data.password}' 2>/dev/null | base64 -d)
-echo "  User: admin"
+echo "  User: postgres"
 echo "  Pass: ${TSDB_PWD:-<Not Found>}"
 echo ""
 

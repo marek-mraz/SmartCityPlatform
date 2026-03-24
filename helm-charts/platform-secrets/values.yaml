@@ -5,6 +5,9 @@ secretsData:
   keycloak-admin-credentials:
     username: "admin"
     password: "GENERATE"
+  keycloak-db-credentials:
+    postgres-password: "GENERATE"
+    password: "GENERATE"
   admin-user-credentials:
     password: "GENERATE"
   consumer-user-credentials:

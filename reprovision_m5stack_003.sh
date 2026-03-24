@@ -31,9 +31,62 @@ SCORPIO_URL="http://localhost:9090"
 
 
 # -------------------------------------------------------------------------
-# 0. Cleanup existing resources (Teardown)
+# 0. Setup EMQX Rules for Sparkplug B
 # -------------------------------------------------------------------------
-echo -e "\n\n0. Cleaning up existing device, entity, and service (if they exist)..."
+echo -e "\n\n0. Setting up EMQX Rules for Sparkplug B..."
+
+echo "Starting port-forward for EMQX API..."
+kubectl -n fiware port-forward svc/emqx 18083:18083 > emqx_pf.log 2>&1 &
+EMQX_PF_PID=$!
+
+echo "Waiting for EMQX port-forward..."
+for i in {1..15}; do
+  if curl -s http://localhost:18083 > /dev/null; then
+    break
+  fi
+  sleep 1
+done
+
+EMQX_PWD=$(kubectl -n fiware get secret emqx-dashboard-credentials -o jsonpath='{.data.EMQX_DASHBOARD__DEFAULT_PASSWORD}' | base64 -d)
+
+# Rule 1: JSON to Sparkplug B (Protobuf)
+curl -s -u "admin:${EMQX_PWD}" -X POST "http://localhost:18083/api/v5/rules" \
+  -H "Content-Type: application/json" \
+  -d @- > /dev/null <<EOF
+{
+  "name": "JSON_to_SparkplugB",
+  "sql": "SELECT spb_encode(json_decode(payload)) as payload FROM \"spBv1.0_JSON/SmartCity/DDATA/M5Stack003\"",
+  "actions":[{
+    "function": "republish",
+    "args": {
+      "topic": "spBv1.0/SmartCity/DDATA/M5Stack003",
+      "payload": "\${payload}"
+    }
+  }]
+}
+EOF
+
+# Rule 2: Sparkplug B to IoT Agent (Flat JSON)
+curl -s -u "admin:${EMQX_PWD}" -X POST "http://localhost:18083/api/v5/rules" \
+  -H "Content-Type: application/json" \
+  -d @- > /dev/null <<EOF
+{
+  "name": "SparkplugB_to_IoTAgent",
+  "sql": "SELECT jq('.metrics | map({(.name): .value}) | add', spb_decode(payload)) as payload FROM \"spBv1.0/SmartCity/DDATA/M5Stack003\"",
+  "actions":[{
+    "function": "republish",
+    "args": {
+      "topic": "/m5stack/M5Stack003/attrs",
+      "payload": "\${payload}"
+    }
+  }]
+}
+EOF
+
+# -------------------------------------------------------------------------
+# 0.5 Cleanup existing resources (Teardown)
+# -------------------------------------------------------------------------
+echo -e "\n\n0.5 Cleaning up existing device, entity, and service (if they exist)..."
 
 # Delete the device in the IoT Agent
 curl -s -X DELETE "http://localhost:4041/iot/devices/${DEVICE_ID}" \
@@ -141,5 +194,6 @@ curl -s -X GET "${SCORPIO_URL}/ngsi-ld/v1/entities/${ENTITY_ID}" \
 echo -e "\n\nCleaning up..."
 kill $PF_IOT_PID
 kill $KUBE_PROXY_PID 2>/dev/null
+kill $EMQX_PF_PID 2>/dev/null
 
 echo "Done! Sensor M5Stack:003 is provisioned and verified in Scorpio."

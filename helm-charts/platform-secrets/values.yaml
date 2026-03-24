@@ -36,3 +36,6 @@ secretsData:
     cookie-secret: "GENERATE_HEX"
   node-red-ngsild:
     client-secret: "GENERATE"
+  emqx-dashboard-credentials:
+    EMQX_DASHBOARD__DEFAULT_USERNAME: "admin"
+    EMQX_DASHBOARD__DEFAULT_PASSWORD: "GENERATE"

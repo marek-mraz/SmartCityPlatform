@@ -140,39 +140,50 @@ void setup() {
     bool sen_valid = (sen5x.readMeasuredValues(pm1p0, pm2p5, pm4p0, pm10p0, sen_hum, sen_temp, voc, nox) == 0);
 
 
-    StaticJsonDocument<512> doc;
-    doc["battery"] = M5.Power.getBatteryLevel();
-    doc["battery_voltage"] = M5.Power.getBatteryVoltage();
+    StaticJsonDocument<1024> doc;
+    doc["timestamp"] = millis();
+    doc["seq"] = 0;
+    JsonArray metrics = doc.createNestedArray("metrics");
 
-    // 5. Build JSON Payload for FIWARE IoT Agent
+    auto add_metric = [&](const char* name, float value) {
+        if (!isnan(value)) {
+            JsonObject m = metrics.createNestedObject();
+            m["name"] = name;
+            m["value"] = value;
+            m["datatype"] = 9; // Float
+        }
+    };
+
+    add_metric("battery", (float)M5.Power.getBatteryLevel());
+    add_metric("battery_voltage", M5.Power.getBatteryVoltage());
+
     if (scd_valid) {
-        doc["co2"] = serialized(String((float)co2, 1));
-        doc["temperature"] = serialized(String(scd_temp, 2));
-        doc["humidity"] = serialized(String(scd_hum, 2));
+        add_metric("co2", (float)co2);
+        add_metric("temperature", scd_temp);
+        add_metric("humidity", scd_hum);
     }
     if (sen_valid) {
-        // Prefer SEN55 temp/humidity if valid, or just add PM/VOC
-        doc["pm1"] = serialized(String(pm1p0, 1));
-        doc["pm25"] = serialized(String(pm2p5, 1));
-        doc["pm4"] = serialized(String(pm4p0, 1));
-        doc["pm10"] = serialized(String(pm10p0, 1));
-        if (!isnan(sen_temp)) doc["sen_temp"] = serialized(String(sen_temp, 2));
-        if (!isnan(sen_hum)) doc["sen_hum"] = serialized(String(sen_hum, 2));
-        if (!isnan(voc)) doc["voc"] = serialized(String(voc, 1));
-        if (!isnan(nox)) doc["nox"] = serialized(String(nox, 1));
+        add_metric("pm1", pm1p0);
+        add_metric("pm25", pm2p5);
+        add_metric("pm4", pm4p0);
+        add_metric("pm10", pm10p0);
+        add_metric("sen_temp", sen_temp);
+        add_metric("sen_hum", sen_hum);
+        add_metric("voc", voc);
+        add_metric("nox", nox);
     }
 
     // 6. Connect & Publish (Only if we have valid data)
     if ((scd_valid || sen_valid) && connectWiFi()) {
-        doc["rssi"] = WiFi.RSSI();
+        add_metric("rssi", (float)WiFi.RSSI());
         
         String payload;
         serializeJson(doc, payload);
         Serial.println("Payload: " + payload);
 
         if (connectMQTT()) {
-            // IoT Agent JSON standard topic format: /<API_KEY>/<DEVICE_ID>/attrs
-            String topic = String("/") + FIWARE_API_KEY + "/" + DEVICE_ID + "/attrs";
+            // Publish to intermediate JSON topic for EMQX Sparkplug B encoding
+            String topic = "spBv1.0_JSON/SmartCity/DDATA/" + String(DEVICE_ID);
             
             if (mqttClient.publish(topic.c_str(), payload.c_str())) {
                 Serial.println("Successfully published to MQTT.");

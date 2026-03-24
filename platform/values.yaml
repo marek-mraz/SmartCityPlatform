@@ -642,6 +642,7 @@ applications:
       service:
         type: ClusterIP
         mqtt: *mqtt_port
+      envFromSecret: emqx-dashboard-credentials
       emqxConfig:
         EMQX_ALLOW_ANONYMOUS: "false"
         EMQX_ACL_NOMATCH: "deny"

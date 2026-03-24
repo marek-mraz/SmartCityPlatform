@@ -76,6 +76,32 @@ echo "  User: consumer-user"
 echo "  Pass: ${CONSUMER_USER_PWD:-<Not Found>}"
 echo ""
 
+# Keycloak Client Secrets
+echo "Keycloak Client Secrets:"
+GRAFANA_OAUTH_SECRET=$(kubectl -n fiware get secret grafana-oauth -o jsonpath='{.data.client-secret}' 2>/dev/null | base64 -d)
+MQTT_EXPLORER_OAUTH_SECRET=$(kubectl -n fiware get secret mqtt-explorer-oauth2 -o jsonpath='{.data.client-secret}' 2>/dev/null | base64 -d)
+EMQX_DASHBOARD_OAUTH_SECRET=$(kubectl -n fiware get secret emqx-dashboard-oauth2 -o jsonpath='{.data.client-secret}' 2>/dev/null | base64 -d)
+CB_PEP_SECRET=$(kubectl -n fiware get secret cb-pep-credentials -o jsonpath='{.data.client-secret}' 2>/dev/null | base64 -d)
+NGSILD_OAUTH_SECRET=$(kubectl -n fiware get secret ngsild-oauth -o jsonpath='{.data.client-secret}' 2>/dev/null | base64 -d)
+NODE_RED_OAUTH_SECRET=$(kubectl -n fiware get secret node-red-oauth2 -o jsonpath='{.data.client-secret}' 2>/dev/null | base64 -d)
+NODE_RED_NGSILD_SECRET=$(kubectl -n fiware get secret node-red-ngsild -o jsonpath='{.data.client-secret}' 2>/dev/null | base64 -d)
+
+echo "  Grafana: ${GRAFANA_OAUTH_SECRET:-<Not Found>}"
+echo "  MQTT Explorer: ${MQTT_EXPLORER_OAUTH_SECRET:-<Not Found>}"
+echo "  EMQX Dashboard: ${EMQX_DASHBOARD_OAUTH_SECRET:-<Not Found>}"
+echo "  CB PEP: ${CB_PEP_SECRET:-<Not Found>}"
+echo "  NGSILD: ${NGSILD_OAUTH_SECRET:-<Not Found>}"
+echo "  Node-RED: ${NODE_RED_OAUTH_SECRET:-<Not Found>}"
+echo "  Node-RED NGSILD: ${NODE_RED_NGSILD_SECRET:-<Not Found>}"
+echo ""
+
+# EMQX Dashboard
+echo "EMQX Dashboard:"
+EMQX_PWD=$(kubectl -n fiware get secret emqx-dashboard-credentials -o jsonpath='{.data.EMQX_DASHBOARD__DEFAULT_PASSWORD}' 2>/dev/null | base64 -d)
+echo "  User: admin"
+echo "  Pass: ${EMQX_PWD:-<Not Found>}"
+echo ""
+
 # MongoDB (Used by IoT Agent)
 echo "MongoDB:"
 MONGO_PWD=$(kubectl -n fiware get secret mongodb-iotagent -o jsonpath='{.data.mongodb-root-password}' 2>/dev/null | base64 -d)
@@ -88,10 +114,4 @@ echo "TimescaleDB:"
 TSDB_PWD=$(kubectl -n fiware get secret tsdb-credentials -o jsonpath='{.data.password}' 2>/dev/null | base64 -d)
 echo "  User: postgres"
 echo "  Pass: ${TSDB_PWD:-<Not Found>}"
-echo ""
-
-# Node-RED NGSILD
-echo "Node-RED NGSILD:"
-NODE_RED_NGSI_LD_CLIENT_SECRET=$(kubectl -n fiware get secret node-red-ngsild -o jsonpath='{.data.client-secret}' 2>/dev/null | base64 -d)
-echo "  Client Secret: ${NODE_RED_NGSI_LD_CLIENT_SECRET:-<Not Found>}"
 echo ""

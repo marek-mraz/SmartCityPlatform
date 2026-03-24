@@ -1,0 +1,145 @@
+#!/bin/bash
+
+echo "Starting port-forward for iot-agent-json..."
+kubectl -n fiware port-forward svc/iot-agent-json 4041:4041 > iot_agent_pf.log 2>&1 &
+PF_IOT_PID=$!
+
+echo "Starting port-forward for Scorpio..."
+SCORPIO_POD=$(kubectl -n fiware get pods -l 'app.kubernetes.io/name=scorpio,app.kubernetes.io/instance=scorpio,!app.kubernetes.io/component' -o name | head -n 1)
+kubectl -n fiware port-forward $SCORPIO_POD 9090:9090 > scorpio_pf.log 2>&1 &
+KUBE_PROXY_PID=$!
+
+# Wait for IOTA and Scorpio to be reachable
+echo "Waiting for port-forwards to be established..."
+for i in {1..15}; do
+  if curl -s http://localhost:4041 > /dev/null && curl -s http://localhost:9090 > /dev/null; then
+    break
+  fi
+  sleep 1
+done
+
+TENANT="airquality"
+FIWARE_SERVICEPATH="/data"
+DEVICE_ID="M5Stack003"
+ENTITY_ID="urn:ngsi-ld:AirQualityObserved:M5Stack:003"
+ENTITY_TYPE="AirQualityObserved"
+CONTEXT="https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.3.jsonld"
+
+# The Kube Proxy URL routes directly through the K8s API to the Scorpio service
+SCORPIO_URL="http://localhost:9090"
+
+
+
+# -------------------------------------------------------------------------
+# 0. Cleanup existing resources (Teardown)
+# -------------------------------------------------------------------------
+echo -e "\n\n0. Cleaning up existing device, entity, and service (if they exist)..."
+
+# Delete the device in the IoT Agent
+curl -s -X DELETE "http://localhost:4041/iot/devices/${DEVICE_ID}" \
+  -H "fiware-service: ${TENANT}" \
+  -H "fiware-servicepath: ${FIWARE_SERVICEPATH}" > /dev/null
+
+# Delete the service group in the IoT Agent
+curl -s -X DELETE "http://localhost:4041/iot/services?resource=/iot/json&apikey=m5stack" \
+  -H "fiware-service: ${TENANT}" \
+  -H "fiware-servicepath: ${FIWARE_SERVICEPATH}" > /dev/null
+
+# Delete the entity in Scorpio
+curl -s -X DELETE "${SCORPIO_URL}/ngsi-ld/v1/entities/${ENTITY_ID}" \
+  -H "NGSILD-Tenant: ${TENANT}" > /dev/null
+
+# -------------------------------------------------------------------------
+
+# 1. Create the Tenant (Service Group) in the IoT Agent
+# This explicitly tells the IoT Agent how to handle the "airquality" tenant 
+# and where to route its data.
+echo -e "\n\n1. Creating Service (Tenant) in IoT Agent..."
+curl -i -X POST "http://localhost:4041/iot/services" \
+  -H "Content-Type: application/json" \
+  -H "fiware-service: ${TENANT}" \
+  -H "fiware-servicepath: ${FIWARE_SERVICEPATH}" \
+  -d '{
+    "services":[
+      {
+        "apikey": "m5stack",
+        "cbroker": "http://scorpio:9090",
+        "entity_type": "'${ENTITY_TYPE}'",
+        "resource": "/iot/json"
+      }
+    ]
+  }'
+
+# 2. Create the entity directly at the Context Broker (Scorpio)
+# By passing the NGSILD-Tenant header, Scorpio will natively auto-create the 
+# tenant DB on the fly if it does not yet exist.
+echo -e "\n\n2. Creating entity at Context Broker (Scorpio)..."
+curl -i -X POST "${SCORPIO_URL}/ngsi-ld/v1/entities" \
+  -H "Content-Type: application/ld+json" \
+  -H "NGSILD-Tenant: ${TENANT}" \
+  -d '{
+    "id": "'${ENTITY_ID}'",
+    "type": "'${ENTITY_TYPE}'",
+    "name": {
+      "type": "Property",
+      "value": "M5Stack Air Quality Sensor 003"
+    },
+    "location": {
+      "type": "GeoProperty",
+      "value": {
+        "type": "Point",
+        "coordinates":[19.1563278, 48.7383681]
+      }
+    },
+    "@context":[
+      "'${CONTEXT}'"
+    ]
+  }'
+
+# 3. Provision the device in the IoT Agent
+echo -e "\n\n3. Provisioning M5Stack:003 with NGSI-LD properties in IoT Agent..."
+curl -s -X POST "http://localhost:4041/iot/devices" \
+  -H "Content-Type: application/json" \
+  -H "fiware-service: ${TENANT}" \
+  -H "fiware-servicepath: ${FIWARE_SERVICEPATH}" \
+  -d '{
+    "devices":[
+      {
+        "device_id": "'${DEVICE_ID}'",
+        "entity_name": "'${ENTITY_ID}'",
+        "entity_type": "'${ENTITY_TYPE}'",
+        "transport": "MQTT",
+        "ngsiVersion": "ld",
+        "attributes":[
+          { "object_id": "co2", "name": "co2", "type": "Property" },
+          { "object_id": "temperature", "name": "temperature", "type": "Property" },
+          { "object_id": "humidity", "name": "humidity", "type": "Property" },
+          { "object_id": "pm1", "name": "pm1", "type": "Property" },
+          { "object_id": "pm25", "name": "pm25", "type": "Property" },
+          { "object_id": "pm4", "name": "pm4", "type": "Property" },
+          { "object_id": "pm10", "name": "pm10", "type": "Property" },
+          { "object_id": "sen_temp", "name": "sen_temp", "type": "Property" },
+          { "object_id": "sen_hum", "name": "sen_hum", "type": "Property" },
+          { "object_id": "voc", "name": "voc", "type": "Property" },
+          { "object_id": "nox", "name": "nox", "type": "Property" },
+          { "object_id": "battery", "name": "battery", "type": "Property" },
+          { "object_id": "rssi", "name": "rssi", "type": "Property" }
+        ]
+      }
+    ]
+  }'
+
+# 4. Check / Get the entity from the Context Broker
+echo -e "\n\n4. Fetching entity from Context Broker (Scorpio) to verify..."
+curl -s -X GET "${SCORPIO_URL}/ngsi-ld/v1/entities/${ENTITY_ID}" \
+  -H "NGSILD-Tenant: ${TENANT}" \
+  -H "Accept: application/ld+json" | python3 -m json.tool 2>/dev/null || \
+curl -s -X GET "${SCORPIO_URL}/ngsi-ld/v1/entities/${ENTITY_ID}" \
+  -H "NGSILD-Tenant: ${TENANT}" \
+  -H "Accept: application/ld+json"
+
+echo -e "\n\nCleaning up..."
+kill $PF_IOT_PID
+kill $KUBE_PROXY_PID 2>/dev/null
+
+echo "Done! Sensor M5Stack:003 is provisioned and verified in Scorpio."

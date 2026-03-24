@@ -13,6 +13,8 @@ spec:
     metadata:
       labels:
         {{- include "timescale.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/values: {{ .Values | toYaml | sha256sum }}
     spec:
       containers:
         - name: {{ .Chart.Name }}

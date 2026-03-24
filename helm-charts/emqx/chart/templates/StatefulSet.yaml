@@ -51,11 +51,10 @@ spec:
         app.kubernetes.io/name: {{ include "emqx.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum | quote }}
+        checksum/values: {{ .Values | toYaml | sha256sum }}
       {{- with .Values.podAnnotations }}
           {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- if .Values.recreatePods }}
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum | quote }}
       {{- end }}
     spec:
       serviceAccountName: {{ include "emqx.serviceAccountName" . }}

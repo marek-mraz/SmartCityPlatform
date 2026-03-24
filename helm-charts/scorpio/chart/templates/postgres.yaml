@@ -17,6 +17,8 @@ spec:
       labels:
         {{- include "scorpioBroker-aaio.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: postgres
+      annotations:
+        checksum/values: {{ .Values | toYaml | sha256sum }}
     spec:
       containers:
         - name: postgres

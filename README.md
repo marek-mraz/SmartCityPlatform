@@ -27,6 +27,10 @@ chmod +x ./scripts/01-create-cluster.sh
 ### 2. Deploy the Platform (ArgoCD + Umbrella Chart)
 This script will install ArgoCD into the cluster and apply the central `platform` umbrella chart, which configures all other dependencies.
 ```bash
+
+kubectl port-forward svc/argocd-server -n argocd 8081:443
+
+
 chmod +x ./scripts/03-deploy-platform.sh
 ./scripts/03-deploy-platform.sh
 ```

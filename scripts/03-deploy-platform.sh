@@ -30,7 +30,7 @@ log_info "Checking if ArgoCD is installed..."
 if ! kubectl get customresourcedefinition applications.argoproj.io >/dev/null 2>&1; then
   log_info "ArgoCD CRDs not found. Installing ArgoCD..."
   kubectl get namespace argocd >/dev/null 2>&1 || kubectl create namespace argocd
-  kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+  kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
   
   log_info "Waiting for ArgoCD CRDs to be established..."
   kubectl wait --for=condition=established --timeout=120s crd/applications.argoproj.io || true

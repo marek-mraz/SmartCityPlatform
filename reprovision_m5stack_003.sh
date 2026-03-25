@@ -23,7 +23,7 @@ for i in {1..15}; do
   sleep 1
 done
 
-if[ "$EMQX_PF_SUCCESS" = false ]; then
+if [ "$EMQX_PF_SUCCESS" = false ]; then
   echo "Error: Failed to establish EMQX port-forward. Check emqx_pf.log"
   kill $EMQX_PF_PID 2>/dev/null
   exit 1
@@ -112,7 +112,7 @@ for i in {1..15}; do
   sleep 1
 done
 
-if[ "$PF_SUCCESS" = false ]; then
+if [ "$PF_SUCCESS" = false ]; then
   echo "Error: Failed to establish port-forwards. Check scorpio_pf.log and iot_agent_pf.log"
   kill $PF_IOT_PID 2>/dev/null
   kill $KUBE_PROXY_PID 2>/dev/null
@@ -234,3 +234,6 @@ kill $KUBE_PROXY_PID 2>/dev/null
 kill $EMQX_PF_PID 2>/dev/null
 
 echo "Done! Sensor M5Stack:003 is provisioned and verified in Scorpio."
+
+
+

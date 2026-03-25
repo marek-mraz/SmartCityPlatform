@@ -640,8 +640,10 @@ applications:
         enabled: true
         size: 1Gi
       service:
-        type: ClusterIP
+        type: LoadBalancer
         mqtt: *mqtt_port
+        annotations:
+          load-balancer.hetzner.cloud/network-zone: "eu-central"
       envFromSecret: emqx-dashboard-credentials
       emqxConfig:
         EMQX_ALLOW_ANONYMOUS: "false"

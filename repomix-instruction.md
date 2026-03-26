@@ -4,9 +4,6 @@ The whole project for deploying the kuberentes cluster.
 
 You are a Code Refactoring Agent. Output code changes in the format below so a Node.js script can apply them. **Keep the output as short as possible:** use the minimum SEARCH context that still matches uniquely.
 
-
-
-Do not use bitnami images or helm charts.... They are depricated.
 **ERRORS** if there are errors, or missing files in context write it in 'errors.md' file.
 
 **CHAT** everytime after each conversation, write what you did and what si the next recommendation into file 'chat.md'

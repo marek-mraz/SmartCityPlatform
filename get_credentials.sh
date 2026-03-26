@@ -119,3 +119,10 @@ TSDB_PWD=$(kubectl -n fiware get secret tsdb-credentials -o jsonpath='{.data.pas
 echo "  User: postgres"
 echo "  Pass: ${TSDB_PWD:-<Not Found>}"
 echo ""
+
+# Nexurbis DB
+echo "Nexurbis DB:"
+NEXURBIS_DB_PWD=$(kubectl -n fiware get secret nexurbis-db-credentials -o jsonpath='{.data.password}' 2>/dev/null | base64 -d)
+echo "  User: postgres"
+echo "  Pass: ${NEXURBIS_DB_PWD:-<Not Found>}"
+echo ""

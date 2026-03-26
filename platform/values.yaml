@@ -833,8 +833,65 @@ applications:
         KEYCLOAK_URL: "http://keycloak-keycloakx-http:80"
         KEYCLOAK_ISSUER_URL: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server"
       database:
-        existingSecret: tsdb-credentials
+        host: nexurbis-db
+        port: 5432
+        username: postgres
+        name: nexurbis
+        existingSecret: nexurbis-db-credentials
         existingSecretPasswordKey: password
+      extraManifests:
+        - |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: nexurbis-db
+            labels:
+              app.kubernetes.io/name: nexurbis-db
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: nexurbis-db
+            template:
+              metadata:
+                labels:
+                  app.kubernetes.io/name: nexurbis-db
+              spec:
+                containers:
+                  - name: postgres
+                    image: postgres:15-alpine
+                    env:
+                      - name: POSTGRES_USER
+                        value: "postgres"
+                      - name: POSTGRES_DB
+                        value: "nexurbis"
+                      - name: POSTGRES_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: nexurbis-db-credentials
+                            key: password
+                    ports:
+                      - containerPort: 5432
+                    volumeMounts:
+                      - name: nexurbis-db-data
+                        mountPath: /var/lib/postgresql/data
+                volumes:
+                  - name: nexurbis-db-data
+                    emptyDir: {}
+        - |
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: nexurbis-db
+            labels:
+              app.kubernetes.io/name: nexurbis-db
+          spec:
+            type: ClusterIP
+            ports:
+              - port: 5432
+                targetPort: 5432
+            selector:
+              app.kubernetes.io/name: nexurbis-db
       keycloak:
         existingSecret: nexurbis-manager-oauth2
         existingSecretKey: client-secret

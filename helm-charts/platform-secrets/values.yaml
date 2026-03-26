@@ -42,3 +42,5 @@ secretsData:
   nexurbis-manager-oauth2:
     client-id: "nexurbis-manager"
     client-secret: "GENERATE"
+  nexurbis-db-credentials:
+    password: "GENERATE"

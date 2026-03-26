@@ -90,6 +90,7 @@ start_port_forward "argocd-server"         8088  443   "ArgoCD" "argocd"
 echo -e "\n${YELLOW}[Databases]${NC}"
 # start_port_forward "tsdb"                  5432  5432  "TimescaleDB"
 start_port_forward "mongodb-iotagent"      27017 27017 "MongoDB (IoT Agent)"
+# start_port_forward "nexurbis-db"           5435  5432  "Nexurbis PostgreSQL"
 # start_port_forward "keycloak-db"           5433  5432  "Keycloak PostgreSQL"
 # Scorpio's internal PostgreSQL (if needed, uses scorpio-postgres service)
 # start_port_forward "scorpio-postgresql"  5434  5432  "Scorpio PostgreSQL"

@@ -830,7 +830,7 @@ applications:
         VITE_API_BASE_URL: "https://manager.{{ $.Values.host | default `localhost` }}"
         APP_URL: "https://manager.{{ $.Values.host | default `localhost` }}"
         API_BASE_URL: "https://manager.{{ $.Values.host | default `localhost` }}"
-        KEYCLOAK_URL: "http://keycloak-keycloakx-http:80"
+        KEYCLOAK_URL: "https://auth.{{ $.Values.host | default `localhost` }}"
         KEYCLOAK_ISSUER_URL: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server"
       database:
         host: nexurbis-db

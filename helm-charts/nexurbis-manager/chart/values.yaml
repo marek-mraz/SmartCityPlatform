@@ -34,13 +34,13 @@ env:
   KEYCLOAK_ADMIN_PASSWORD: "admin"
 
 database:
-  host: tsdb
+  host: nexurbis-db
   port: 5432
   username: postgres
   name: nexurbis
-  password: "password"
-  # existingSecret: ""
-  # existingSecretPasswordKey: ""
+  password: ""
+  existingSecret: nexurbis-db-credentials
+  existingSecretPasswordKey: password
 
 keycloak:
   clientSecret: ""

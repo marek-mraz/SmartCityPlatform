@@ -31,7 +31,10 @@ env:
   KEYCLOAK_REALM: "fiware-server"
   KEYCLOAK_CLIENT_ID: "nexurbis-manager"
   KEYCLOAK_ADMIN: "admin"
-  KEYCLOAK_ADMIN_PASSWORD: "admin"
+  KEYCLOAK_DB_NAME: "keycloak"
+  KEYCLOAK_DB_USERNAME: "keycloak"
+  TELEGRAM_BOT_TOKEN: ""
+  TELEGRAM_CHAT_ID: ""
 
 database:
   host: nexurbis-db
@@ -46,6 +49,12 @@ keycloak:
   clientSecret: ""
   # existingSecret: ""
   # existingSecretKey: ""
+  adminPassword: "admin"
+  # adminExistingSecret: ""
+  # adminExistingSecretKey: "password"
+  dbPassword: ""
+  # dbExistingSecret: ""
+  # dbExistingSecretKey: "password"
 
 redis:
   enabled: true

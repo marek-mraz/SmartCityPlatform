@@ -832,6 +832,8 @@ applications:
         API_BASE_URL: "https://manager.{{ $.Values.host | default `localhost` }}"
         KEYCLOAK_URL: "https://auth.{{ $.Values.host | default `localhost` }}"
         KEYCLOAK_ISSUER_URL: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server"
+        KEYCLOAK_REALM: "fiware-server"
+        KEYCLOAK_CLIENT_ID: "nexurbis-manager"
       database:
         host: nexurbis-db
         port: 5432
@@ -895,6 +897,10 @@ applications:
       keycloak:
         existingSecret: nexurbis-manager-oauth2
         existingSecretKey: client-secret
+        adminExistingSecret: keycloak-admin-credentials
+        adminExistingSecretKey: password
+        dbExistingSecret: keycloak-db-credentials
+        dbExistingSecretKey: password
 
   - name: gitlab
     enabled: false

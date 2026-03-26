@@ -59,6 +59,24 @@ spec:
               {{- else }}
               value: {{ .Values.keycloak.clientSecret | quote }}
               {{- end }}
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              {{- if .Values.keycloak.adminExistingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.adminExistingSecret }}
+                  key: {{ .Values.keycloak.adminExistingSecretKey | default "password" }}
+              {{- else }}
+              value: {{ .Values.keycloak.adminPassword | quote }}
+              {{- end }}
+            - name: KEYCLOAK_DB_PASSWORD
+              {{- if .Values.keycloak.dbExistingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.dbExistingSecret }}
+                  key: {{ .Values.keycloak.dbExistingSecretKey | default "password" }}
+              {{- else }}
+              value: {{ .Values.keycloak.dbPassword | quote }}
+              {{- end }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: {{ $val | quote }}

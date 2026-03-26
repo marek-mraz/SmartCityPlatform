@@ -51,4 +51,4 @@ redis:
   enabled: true
   password: "password"
 
-extraManifests:[]
+extraManifests: []

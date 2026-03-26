@@ -28,6 +28,33 @@ spec:
           ports:
             - containerPort: 6379
               name: redis
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          {{- if .Values.redis.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "nexurbis-manager.fullname" . }}-redis-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+{{- if .Values.redis.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "nexurbis-manager.fullname" . }}-redis-pvc
+  labels:
+    {{- include "nexurbis-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.redis.persistence.size | default "2Gi" }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service

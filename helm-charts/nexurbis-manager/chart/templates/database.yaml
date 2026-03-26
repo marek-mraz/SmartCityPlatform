@@ -1,0 +1,79 @@
+{{- if .Values.database.builtIn.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nexurbis-manager.fullname" . }}-db
+  labels:
+    {{- include "nexurbis-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "nexurbis-manager.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: db
+  template:
+    metadata:
+      labels:
+        {{- include "nexurbis-manager.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.database.username | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.database.name | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret }}
+                  key: {{ .Values.database.existingSecretPasswordKey | default "password" }}
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: db-data
+          {{- if .Values.database.builtIn.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "nexurbis-manager.fullname" . }}-db-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+{{- if .Values.database.builtIn.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "nexurbis-manager.fullname" . }}-db-pvc
+  labels:
+    {{- include "nexurbis-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: db
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.database.builtIn.persistence.size | default "8Gi" }}
+{{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nexurbis-manager.fullname" . }}-db
+  labels:
+    {{- include "nexurbis-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: db
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    {{- include "nexurbis-manager.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: db
+{{- end }}

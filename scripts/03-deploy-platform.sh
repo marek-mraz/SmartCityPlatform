@@ -38,6 +38,9 @@ else
   log_info "ArgoCD is already installed."
 fi
 
+# Create namespace if it doesn't exist
+kubectl get namespace fiware >/dev/null 2>&1 || kubectl create namespace fiware
+
 # Render the umbrella chart and apply it as ArgoCD Application CRDs
 helm template fiware-platform "$(dirname "$0")/../platform" \
   --set host="${DOMAIN}" \

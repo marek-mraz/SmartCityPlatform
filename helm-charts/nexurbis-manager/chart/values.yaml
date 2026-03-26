@@ -37,13 +37,18 @@ env:
   TELEGRAM_CHAT_ID: ""
 
 database:
-  host: nexurbis-db
+  host: nexurbis-manager-db
   port: 5432
   username: postgres
   name: nexurbis
   password: ""
   existingSecret: nexurbis-db-credentials
   existingSecretPasswordKey: password
+  builtIn:
+    enabled: true
+    persistence:
+      enabled: true
+      size: 8Gi
 
 keycloak:
   clientSecret: ""
@@ -59,5 +64,26 @@ keycloak:
 redis:
   enabled: true
   password: "password"
+  persistence:
+    enabled: true
+    size: 2Gi
+
+env:
+  VITE_APP_NAME: "Nexurbis Manager"
+  VITE_API_TIMEOUT: "5000"
+  VITE_KEYCLOAK_REALM: "fiware-server"
+  VITE_KEYCLOAK_CLIENT_ID: "nexurbis-manager"
+  TAG_VERSION: "1.0.0"
+  API_GLOBAL_PREFIX: "/api"
+  KEYCLOAK_REALM: "fiware-server"
+  KEYCLOAK_CLIENT_ID: "nexurbis-manager"
+  KEYCLOAK_ADMIN: "admin"
+  KEYCLOAK_DB_NAME: "keycloak"
+  KEYCLOAK_DB_USERNAME: "keycloak"
+  TELEGRAM_BOT_TOKEN: ""
+  TELEGRAM_CHAT_ID: ""
+  MQTT_HOST: "emqx"
+  MQTT_PORT: "1883"
+  EMQX_API_URL: "http://emqx:18083"
 
 extraManifests: []

@@ -31,3 +31,7 @@ helm template fiware-platform "$(dirname "$0")/../platform" \
   --namespace argocd | kubectl delete -n argocd -f -
 
 echo "FIWARE Platform apps deleted successfully!"
+
+echo "Deleting PVCs in fiware namespace..."
+kubectl delete pvc --all -n fiware --wait=false
+echo "PVCs deletion initiated."

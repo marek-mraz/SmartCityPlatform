@@ -39,3 +39,6 @@ secretsData:
   emqx-dashboard-credentials:
     EMQX_DASHBOARD__DEFAULT_USERNAME: "admin"
     EMQX_DASHBOARD__DEFAULT_PASSWORD: "GENERATE"
+  nexurbis-manager-oauth2:
+    client-id: "nexurbis-manager"
+    client-secret: "GENERATE"

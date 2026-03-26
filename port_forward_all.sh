@@ -35,6 +35,7 @@ start_port_forward() {
     local local_port="$2"
     local remote_port="$3"
     local label="$4"
+    local ns="${5:-$NAMESPACE}"
     local log_file="/tmp/pf_smartcity_${svc_name}_${local_port}.log"
 
     if [[ "$SELECTIVE" == true ]]; then
@@ -42,7 +43,7 @@ start_port_forward() {
         [[ "$answer" =~ ^[Nn]$ ]] && return
     fi
 
-    kubectl -n "$NAMESPACE" port-forward "svc/${svc_name}" "${local_port}:${remote_port}" > "$log_file" 2>&1 &
+    kubectl -n "$ns" port-forward "svc/${svc_name}" "${local_port}:${remote_port}" > "$log_file" 2>&1 &
     local pid=$!
     PIDS+=("$pid")
     SERVICES+=("${label}|localhost:${local_port}|${pid}")
@@ -83,7 +84,7 @@ start_port_forward "iot-agent-json"        4041  4041  "IoT Agent JSON"
 
 # --- ArgoCD ---
 echo -e "\n${YELLOW}[ArgoCD]${NC}"
-start_port_forward "argocd-server"         8081  443   "ArgoCD"
+start_port_forward "argocd-server"         8088  443   "ArgoCD" "argocd"
 
 # --- Databases ---
 echo -e "\n${YELLOW}[Databases]${NC}"
@@ -109,6 +110,7 @@ start_port_forward "apisix"                9080  80    "APISIX (PEP Proxy)"
 # --- Visualization / UI ---
 echo -e "\n${YELLOW}[Visualization]${NC}"
 start_port_forward "grafana"               3001  80    "Grafana"
+start_port_forward "nexurbis-manager"      3002  3000  "Nexurbis Manager"
 
 # --- Node-RED ---
 echo -e "\n${YELLOW}[Automation]${NC}"
@@ -128,12 +130,14 @@ echo -e "  Scorpio (Context Broker)   ${CYAN}http://localhost:9090${NC}"
 echo -e "  IoT Agent JSON             ${CYAN}http://localhost:4041${NC}"
 echo -e "  TimescaleDB                ${CYAN}postgresql://localhost:5432${NC}"
 echo -e "  MongoDB (IoT Agent)        ${CYAN}mongodb://localhost:27017${NC}"
+  echo -e "  ArgoCD                     ${CYAN}https://localhost:8088${NC}"
 # echo -e "  Keycloak PostgreSQL        ${CYAN}postgresql://localhost:5433${NC}"
 echo -e "  EMQX MQTT                  ${CYAN}mqtt://localhost:1883${NC}"
 echo -e "  EMQX Dashboard API         ${CYAN}http://localhost:18083${NC}"
 # echo -e "  Keycloak                   ${CYAN}http://localhost:8080${NC}"
 echo -e "  APISIX (PEP Proxy)         ${CYAN}http://localhost:9080${NC}"
 echo -e "  Grafana                    ${CYAN}http://localhost:3001${NC}"
+echo -e "  Nexurbis Manager           ${CYAN}http://localhost:3002${NC}"
 echo -e "  Node-RED                   ${CYAN}http://localhost:1880${NC}"
 echo -e "  Orion Sync Unwrapper       ${CYAN}http://localhost:8081${NC}"
 echo ""

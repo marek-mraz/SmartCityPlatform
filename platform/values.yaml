@@ -357,6 +357,11 @@ applications:
                           secretKeyRef:
                             name: emqx-dashboard-oauth2
                             key: client-secret
+                      - name: NEXURBIS_MANAGER_CLIENT_SECRET
+                        valueFrom:
+                          secretKeyRef:
+                            name: nexurbis-manager-oauth2
+                            key: client-secret
                       - name: KEYCLOAK_AVAILABILITYCHECK_ENABLED
                         value: "true"
                       - name: KEYCLOAK_AVAILABILITYCHECK_TIMEOUT
@@ -446,6 +451,22 @@ applications:
                     "publicClient": false,
                     "protocol": "openid-connect",
                     "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
+                  },
+                  {
+                    "clientId": "nexurbis-manager",
+                    "enabled": true,
+                    "clientAuthenticatorType": "client-secret",
+                    "secret": "$(env:NEXURBIS_MANAGER_CLIENT_SECRET)",
+                    "standardFlowEnabled": true,
+                    "directAccessGrantsEnabled": true,
+                    "redirectUris":[
+                      "https://manager.{{ $.Values.host | default `localhost` }}/*",
+                      "http://localhost:5173/*"
+                    ],
+                    "webOrigins": ["+"],
+                    "publicClient": false,
+                    "protocol": "openid-connect",
+                    "defaultClientScopes":["web-origins", "acr", "roles", "profile", "email"]
                   },
                   {
                     "clientId": "apisix-pep",
@@ -781,6 +802,42 @@ applications:
         tls:
           - hosts:
               - cb.{{ $.Values.host | default `localhost` }}
+
+  - name: nexurbis-manager
+    enabled: true
+    source_path: helm-charts/nexurbis-manager/chart
+    source_ref: *branch
+    destination: *destination
+    helm_values:
+    - values.yaml
+    values:
+      ingress:
+        enabled: true
+        className: *ingressClassName
+        annotations:
+          traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+          - host: "manager.{{ $.Values.host | default `localhost` }}"
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - hosts:
+              - "manager.{{ $.Values.host | default `localhost` }}"
+      env:
+        VITE_KEYCLOAK_URL: "https://auth.{{ $.Values.host | default `localhost` }}"
+        VITE_API_BASE_URL: "https://manager.{{ $.Values.host | default `localhost` }}"
+        APP_URL: "https://manager.{{ $.Values.host | default `localhost` }}"
+        API_BASE_URL: "https://manager.{{ $.Values.host | default `localhost` }}"
+        KEYCLOAK_URL: "http://keycloak-keycloakx-http:80"
+        KEYCLOAK_ISSUER_URL: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server"
+      database:
+        existingSecret: tsdb-credentials
+        existingSecretPasswordKey: password
+      keycloak:
+        existingSecret: nexurbis-manager-oauth2
+        existingSecretKey: client-secret
 
   - name: gitlab
     enabled: false

@@ -1,0 +1,52 @@
+replicaCount: 1
+
+image:
+  repository: registry.gitlab.com/nexurbis/nexurbis-manager
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: false
+  className: "traefik"
+  annotations: {}
+  hosts:
+    - host: manager.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+env:
+  VITE_APP_NAME: "Nexurbis Manager"
+  VITE_API_TIMEOUT: "5000"
+  VITE_KEYCLOAK_REALM: "fiware-server"
+  VITE_KEYCLOAK_CLIENT_ID: "nexurbis-manager"
+  TAG_VERSION: "1.0.0"
+  API_GLOBAL_PREFIX: "/api"
+  KEYCLOAK_REALM: "fiware-server"
+  KEYCLOAK_CLIENT_ID: "nexurbis-manager"
+  KEYCLOAK_ADMIN: "admin"
+  KEYCLOAK_ADMIN_PASSWORD: "admin"
+
+database:
+  host: tsdb
+  port: 5432
+  username: postgres
+  name: nexurbis
+  password: "password"
+  # existingSecret: ""
+  # existingSecretPasswordKey: ""
+
+keycloak:
+  clientSecret: ""
+  # existingSecret: ""
+  # existingSecretKey: ""
+
+redis:
+  enabled: true
+  password: "password"

@@ -1,0 +1,48 @@
+{{- if .Values.redis.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nexurbis-manager.fullname" . }}-redis
+  labels:
+    {{- include "nexurbis-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "nexurbis-manager.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: redis
+  template:
+    metadata:
+      labels:
+        {{- include "nexurbis-manager.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          command:["redis-server", "--requirepass", "$(REDIS_PASSWORD)", "--appendonly", "yes"]
+          env:
+            - name: REDIS_PASSWORD
+              value: {{ .Values.redis.password | quote }}
+          ports:
+            - containerPort: 6379
+              name: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nexurbis-manager.fullname" . }}-redis
+  labels:
+    {{- include "nexurbis-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: redis
+      name: redis
+  selector:
+    {{- include "nexurbis-manager.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: redis
+{{- end }}

@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nexurbis-manager.fullname" . }}
+  labels:
+    {{- include "nexurbis-manager.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "nexurbis-manager.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "nexurbis-manager.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: DB_HOST
+              value: {{ .Values.database.host | quote }}
+            - name: DB_PORT
+              value: {{ .Values.database.port | quote }}
+            - name: DB_USERNAME
+              value: {{ .Values.database.username | quote }}
+            - name: DB_NAME
+              value: {{ .Values.database.name | quote }}
+            - name: DB_PASSWORD
+              {{- if .Values.database.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret }}
+                  key: {{ .Values.database.existingSecretPasswordKey | default "password" }}
+              {{- else }}
+              value: {{ .Values.database.password | quote }}
+              {{- end }}
+            - name: REDIS_HOST
+              value: {{ if .Values.redis.enabled }}{{ include "nexurbis-manager.fullname" . }}-redis{{ else }}{{ .Values.env.REDIS_HOST }}{{ end }}
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_PASSWORD
+              value: {{ .Values.redis.password | quote }}
+            - name: KEYCLOAK_SECRET
+              {{- if .Values.keycloak.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.existingSecret }}
+                  key: {{ .Values.keycloak.existingSecretKey | default "client-secret" }}
+              {{- else }}
+              value: {{ .Values.keycloak.clientSecret | quote }}
+              {{- end }}
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}

@@ -34,6 +34,7 @@ echo "  Scorpio:      https://scorpio.${DOMAIN}"
 echo "  Node-RED:     https://node-red.${DOMAIN}"
 echo "  Kong:         https://kong.${DOMAIN}"
 echo "  QuantumLeap:  https://quantumleap.${DOMAIN}"
+echo "  Manager:      https://manager.${DOMAIN}"
 echo ""
 
 # ArgoCD
@@ -92,7 +93,10 @@ echo "  EMQX Dashboard: ${EMQX_DASHBOARD_OAUTH_SECRET:-<Not Found>}"
 echo "  CB PEP: ${CB_PEP_SECRET:-<Not Found>}"
 echo "  NGSILD: ${NGSILD_OAUTH_SECRET:-<Not Found>}"
 echo "  Node-RED: ${NODE_RED_OAUTH_SECRET:-<Not Found>}"
+NEXURBIS_MANAGER_SECRET=$(kubectl -n fiware get secret nexurbis-manager-oauth2 -o jsonpath='{.data.client-secret}' 2>/dev/null | base64 -d)
+
 echo "  Node-RED NGSILD: ${NODE_RED_NGSILD_SECRET:-<Not Found>}"
+echo "  Nexurbis Manager: ${NEXURBIS_MANAGER_SECRET:-<Not Found>}"
 echo ""
 
 # EMQX Dashboard

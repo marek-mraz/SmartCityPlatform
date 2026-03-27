@@ -53,6 +53,9 @@ metadata:
   name: {{ include "keycloak.fullname" . }}-db-pvc
   labels:
     app.kubernetes.io/name: keycloak-db
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+    helm.sh/resource-policy: keep
 spec:
   accessModes:
     - ReadWriteOnce

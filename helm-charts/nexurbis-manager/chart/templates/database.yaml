@@ -57,6 +57,9 @@ metadata:
   labels:
     {{- include "nexurbis-manager.labels" . | nindent 4 }}
     app.kubernetes.io/component: db
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+    helm.sh/resource-policy: keep
 spec:
   accessModes:
     - ReadWriteOnce

@@ -33,6 +33,38 @@ spec:
             value: "9092"
           - name: KAFKA_ZOOKEEPER_CONNECT
             value: {{ include "scorpioBroker-aaio.fullname" . }}-zookeeper:2181
+          - name: KAFKA_LOG_DIRS
+            value: /kafka/kafka-logs
+        volumeMounts:
+          - name: kafka-data
+            mountPath: /kafka
+      volumes:
+        - name: kafka-data
+          {{- if .Values.kafka.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "scorpioBroker-aaio.fullname" . }}-kafka-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+{{- if .Values.kafka.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "scorpioBroker-aaio.fullname" . }}-kafka-pvc
+  labels:
+    {{- include "scorpioBroker-aaio.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.kafka.persistence.size | default "8Gi" }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service

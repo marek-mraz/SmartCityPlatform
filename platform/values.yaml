@@ -90,6 +90,9 @@ applications:
         persistence:
           enabled: true
           size: 2Gi
+          annotations:
+            argocd.argoproj.io/sync-options: Prune=false
+            helm.sh/resource-policy: keep
         serviceMonitor:
           enabled: false
         extraSecretMounts: []
@@ -181,7 +184,7 @@ applications:
                 - grafana.{{ $.Values.host | default `localhost` }}
 
   - name: advanced-dashboards
-    enabled: true
+    enabled: false
     source_path: helm-charts/advanced-dashboards/chart
     source_ref: *branch
     destination: *destination
@@ -203,6 +206,9 @@ applications:
         persistence:
           enabled: true
           size: 8Gi
+          annotations:
+            argocd.argoproj.io/sync-options: Prune=false
+            helm.sh/resource-policy: keep
 
   - name: keycloak
     enabled: *keycloakEnabled

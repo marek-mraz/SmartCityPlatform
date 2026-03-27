@@ -5,6 +5,9 @@ metadata:
   name: {{ include "timescale.fullname" . }}
   labels:
     {{- include "timescale.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+    helm.sh/resource-policy: keep
 spec:
   accessModes:
     - ReadWriteOnce

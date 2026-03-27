@@ -27,6 +27,62 @@ spec:
         ports:
         - containerPort: 2181
           protocol: TCP
+        volumeMounts:
+          - name: zookeeper-data
+            mountPath: /data
+          - name: zookeeper-datalog
+            mountPath: /datalog
+      volumes:
+        - name: zookeeper-data
+          {{- if .Values.kafka.zookeeper.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "scorpioBroker-aaio.fullname" . }}-zookeeper-data-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: zookeeper-datalog
+          {{- if .Values.kafka.zookeeper.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "scorpioBroker-aaio.fullname" . }}-zookeeper-datalog-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+{{- if .Values.kafka.zookeeper.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "scorpioBroker-aaio.fullname" . }}-zookeeper-data-pvc
+  labels:
+    {{- include "scorpioBroker-aaio.labels" . | nindent 4 }}
+    app.kubernetes.io/component: zookeeper
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.kafka.zookeeper.persistence.size | default "2Gi" }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "scorpioBroker-aaio.fullname" . }}-zookeeper-datalog-pvc
+  labels:
+    {{- include "scorpioBroker-aaio.labels" . | nindent 4 }}
+    app.kubernetes.io/component: zookeeper
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.kafka.zookeeper.persistence.size | default "2Gi" }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service

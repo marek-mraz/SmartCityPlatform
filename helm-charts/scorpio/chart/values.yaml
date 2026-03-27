@@ -19,6 +19,13 @@ postgresql:
 kafka:
   enabled: true
   bootstrapServers: ""
+  persistence:
+    enabled: true
+    size: 8Gi
+  zookeeper:
+    persistence:
+      enabled: true
+      size: 2Gi
 
 image:
   repository: scorpiobroker/all-in-one-runner

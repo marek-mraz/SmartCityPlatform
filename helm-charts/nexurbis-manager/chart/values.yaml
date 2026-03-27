@@ -21,21 +21,6 @@ ingress:
           pathType: Prefix
   tls: []
 
-env:
-  VITE_APP_NAME: "Nexurbis Manager"
-  VITE_API_TIMEOUT: "5000"
-  VITE_KEYCLOAK_REALM: "fiware-server"
-  VITE_KEYCLOAK_CLIENT_ID: "nexurbis-manager"
-  TAG_VERSION: "1.0.0"
-  API_GLOBAL_PREFIX: "/api"
-  KEYCLOAK_REALM: "fiware-server"
-  KEYCLOAK_CLIENT_ID: "nexurbis-manager"
-  KEYCLOAK_ADMIN: "admin"
-  KEYCLOAK_DB_NAME: "keycloak"
-  KEYCLOAK_DB_USERNAME: "keycloak"
-  TELEGRAM_BOT_TOKEN: ""
-  TELEGRAM_CHAT_ID: ""
-
 database:
   host: nexurbis-manager-db
   port: 5432

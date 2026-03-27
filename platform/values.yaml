@@ -184,7 +184,7 @@ applications:
                 - grafana.{{ $.Values.host | default `localhost` }}
 
   - name: advanced-dashboards
-    enabled: false
+    enabled: true
     source_path: helm-charts/advanced-dashboards/chart
     source_ref: *branch
     destination: *destination

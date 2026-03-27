@@ -16,7 +16,7 @@ grafana:
     auth.anonymous:
       enabled: false
   initChownData:
-    enabled: false
+    enabled: true
   persistence:
     enabled: false
   plugins:
@@ -25,7 +25,10 @@ grafana:
   rbac:
     pspEnabled: false
     namespaced: true
-  securityContext: ""
+  securityContext:
+    runAsUser: 472
+    runAsGroup: 472
+    fsGroup: 472
 
   sidecar:
     dashboards:

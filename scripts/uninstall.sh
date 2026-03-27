@@ -34,4 +34,4 @@ echo "FIWARE Platform apps deleted successfully!"
 
 echo "Deleting PVCs in fiware namespace..."
 kubectl delete pvc --all -n fiware --wait=false
-echo "PVCs deletion initiated."
+echo "PVCs deletion initiated."pou

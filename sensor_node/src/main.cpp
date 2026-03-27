@@ -63,6 +63,7 @@ bool connectWiFi() {
 
 bool connectMQTT() {
     mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
+    mqttClient.setBufferSize(1024);
     int retries = 0;
     while (!mqttClient.connected() && retries < MAX_MQTT_RETRIES) {
         Serial.print("Connecting to MQTT...");
@@ -141,16 +142,10 @@ void setup() {
 
 
     StaticJsonDocument<1024> doc;
-    doc["timestamp"] = millis();
-    doc["seq"] = 0;
-    JsonArray metrics = doc.createNestedArray("metrics");
 
     auto add_metric = [&](const char* name, float value) {
         if (!isnan(value)) {
-            JsonObject m = metrics.createNestedObject();
-            m["name"] = name;
-            m["value"] = value;
-            m["datatype"] = 9; // Float
+            doc[name] = value;
         }
     };
 
@@ -182,8 +177,8 @@ void setup() {
         Serial.println("Payload: " + payload);
 
         if (connectMQTT()) {
-            // Publish to intermediate JSON topic for EMQX Sparkplug B encoding
-            String topic = "spBv1.0_JSON/SmartCity/DDATA/" + String(DEVICE_ID);
+            // Publish to FIWARE IoT Agent JSON topic
+            String topic = "/" + String(FIWARE_API_KEY) + "/" + String(DEVICE_ID) + "/attrs";
             
             if (mqttClient.publish(topic.c_str(), payload.c_str())) {
                 Serial.println("Successfully published to MQTT.");

@@ -28,13 +28,40 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
             }
           },
           "mappings": [],
@@ -60,97 +87,32 @@
         "x": 0,
         "y": 0
       },
-      "id": 6,
+      "id": 12,
       "options": {
-        "basemap": {
-          "config": {},
-          "name": "Layer 0",
-          "noRepeat": false,
-          "type": "default"
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "controls": {
-          "mouseWheelZoom": true,
-          "showAttribution": true,
-          "showDebug": false,
-          "showMeasure": false,
-          "showScale": false,
-          "showZoom": true
-        },
-        "layers": [
-          {
-            "config": {
-              "showLegend": true,
-              "style": {
-                "color": {
-                  "fixed": "dark-green"
-                },
-                "opacity": 0.8,
-                "rotation": {
-                  "fixed": 0,
-                  "max": 360,
-                  "min": -360,
-                  "mode": "mod"
-                },
-                "size": {
-                  "fixed": 5,
-                  "max": 15,
-                  "min": 2
-                },
-                "symbol": {
-                  "fixed": "img/icons/marker/circle.svg",
-                  "mode": "fixed"
-                },
-                "symbolAlign": {
-                  "horizontal": "center",
-                  "vertical": "center"
-                },
-                "text": {
-                  "fixed": "",
-                  "mode": "field"
-                },
-                "textConfig": {
-                  "fontSize": 12,
-                  "offsetX": 0,
-                  "offsetY": 0,
-                  "textAlign": "center",
-                  "textBaseline": "middle"
-                }
-              }
-            },
-            "location": {
-              "mode": "auto"
-            },
-            "name": "Layer 1",
-            "tooltip": true,
-            "type": "markers"
-          }
-        ],
         "tooltip": {
-          "mode": "details"
-        },
-        "view": {
-          "allLayers": true,
-          "id": "coords",
-          "lat": 48.738495,
-          "lon": 19.151042,
-          "noRepeat": false,
-          "zoom": 13.97
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
-          "datasource": {
-            "type": "ngsild-grafana-datasource",
-            "uid": "ngsild"
-          },
-          "entityType": "AirQualityObserved",
-          "queryType": "geo",
+          "attributes": [],
+          "entityId": "urn:ngsi-ld:Vehicle:sk_banskabystrica:e3daa900-5f6b-4a6c-8495-76696a248cb8",
+          "entityType": "Vehicle",
+          "queryType": "temporal",
           "refId": "A"
         }
       ],
-      "title": "live map",
-      "type": "geomap"
+      "title": "New panel",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -233,16 +195,9 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
-          "attributes": [
-            "pm1",
-            "pm10",
-            "pm25",
-            "pm4"
-          ],
-          "entityId": "urn:ngsi-ld:AirQualityObserved:M5Stack:003",
           "entityType": "AirQualityObserved",
           "namePattern": "attribute",
           "queryType": "temporal",
@@ -260,40 +215,13 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
           "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
             }
           },
           "mappings": [],
@@ -319,35 +247,89 @@
         "x": 0,
         "y": 8
       },
-      "id": 7,
+      "id": 11,
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "basemap": {
+          "config": {},
+          "name": "Layer 0",
+          "noRepeat": false,
+          "type": "default"
         },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showDebug": false,
+          "showMeasure": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "fixed": "dark-green"
+                },
+                "opacity": 1,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "Layer 1",
+            "tooltip": true,
+            "type": "markers"
+          }
+        ],
         "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+          "mode": "details"
+        },
+        "view": {
+          "allLayers": true,
+          "id": "coords",
+          "lat": 48.738792,
+          "lon": 19.164928,
+          "noRepeat": false,
+          "zoom": 13.04
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
-          "attributes": [
-            "co2"
-          ],
-          "entityId": "urn:ngsi-ld:AirQualityObserved:M5Stack:003",
-          "entityType": "AirQualityObserved",
-          "namePattern": "attribute",
-          "queryType": "temporal",
+          "entityType": "Project",
+          "queryType": "geo",
           "refId": "A"
         }
       ],
-      "title": "Historic Values CO2",
-      "type": "timeseries"
+      "title": "projekt panel",
+      "type": "geomap"
     },
     {
       "datasource": {
@@ -430,13 +412,12 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "attributes": [
             "temperature"
           ],
-          "entityId": "urn:ngsi-ld:AirQualityObserved:M5Stack:003",
           "entityType": "AirQualityObserved",
           "namePattern": "attribute",
           "queryType": "temporal",
@@ -478,96 +459,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "observedAt"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Observed At"
-              },
-              {
-                "id": "unit",
-                "value": "dateTimeAsIso"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "timeInstant"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Time Instant"
-              },
-              {
-                "id": "unit",
-                "value": "dateTimeAsIso"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "temperature"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Temperature"
-              },
-              {
-                "id": "unit",
-                "value": "celsius"
-              },
-              {
-                "id": "decimals",
-                "value": 1
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "humidity"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Humidity"
-              },
-              {
-                "id": "unit",
-                "value": "percent"
-              },
-              {
-                "id": "decimals",
-                "value": 1
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "co2"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "CO₂"
-              },
-              {
-                "id": "unit",
-                "value": "ppm"
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -575,15 +467,139 @@
         "x": 0,
         "y": 16
       },
-      "id": 2,
+      "id": 10,
       "options": {
         "basemap": {
-          "config": {
-            "showLabels": true,
-            "theme": "auto"
-          },
+          "config": {},
           "name": "Layer 0",
-          "type": "carto"
+          "noRepeat": false,
+          "type": "default"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showDebug": false,
+          "showMeasure": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "fixed": "dark-green"
+                },
+                "opacity": 1,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "Layer 1",
+            "tooltip": true,
+            "type": "markers"
+          }
+        ],
+        "tooltip": {
+          "mode": "details"
+        },
+        "view": {
+          "allLayers": true,
+          "id": "coords",
+          "lat": 60.164723,
+          "lon": 24.746954,
+          "noRepeat": false,
+          "zoom": 9.99
+        }
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "attributes": [],
+          "entityId": "urn:ngsi-ld:Vehicle:sk_banskabystrica:e3daa900-5f6b-4a6c-8495-76696a248cb8",
+          "entityType": "Vehicle",
+          "queryType": "geo",
+          "refId": "A"
+        }
+      ],
+      "title": "Bus",
+      "type": "geomap"
+    },
+    {
+      "datasource": {
+        "type": "ngsild-grafana-datasource",
+        "uid": "ngsild"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 6,
+      "options": {
+        "basemap": {
+          "config": {},
+          "name": "Layer 0",
+          "noRepeat": false,
+          "type": "default"
         },
         "controls": {
           "mouseWheelZoom": true,
@@ -606,10 +622,10 @@
                   "fixed": 0,
                   "max": 360,
                   "min": -360,
-                  "mode": "clamped"
+                  "mode": "mod"
                 },
                 "size": {
-                  "fixed": 10,
+                  "fixed": 5,
                   "max": 15,
                   "min": 2
                 },
@@ -617,15 +633,18 @@
                   "fixed": "img/icons/marker/circle.svg",
                   "mode": "fixed"
                 },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
                 "text": {
-                  "field": "id",
                   "fixed": "",
                   "mode": "field"
                 },
                 "textConfig": {
                   "fontSize": 12,
                   "offsetX": 0,
-                  "offsetY": -15,
+                  "offsetY": 0,
                   "textAlign": "center",
                   "textBaseline": "middle"
                 }
@@ -634,7 +653,7 @@
             "location": {
               "mode": "auto"
             },
-            "name": "Sensor Locations",
+            "name": "Layer 1",
             "tooltip": true,
             "type": "markers"
           }
@@ -645,29 +664,122 @@
         "view": {
           "allLayers": true,
           "id": "coords",
-          "lat": 48.738629,
-          "lon": 19.154856,
+          "lat": 48.738495,
+          "lon": 19.151042,
           "noRepeat": false,
-          "zoom": 13.63
+          "zoom": 13.97
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
-          "attributes": [],
           "datasource": {
             "type": "ngsild-grafana-datasource",
             "uid": "ngsild"
           },
-          "entityId": "urn:ngsi-ld:AirQualityObserved:M5Stack:003",
-          "entityName": "id",
           "entityType": "AirQualityObserved",
           "queryType": "geo",
           "refId": "A"
         }
       ],
-      "title": "Sensor Live Map",
+      "title": "air quality sensor",
       "type": "geomap"
+    },
+    {
+      "datasource": {
+        "type": "ngsild-grafana-datasource",
+        "uid": "ngsild"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "attributes": [
+            "co2"
+          ],
+          "entityType": "AirQualityObserved",
+          "namePattern": "attribute",
+          "queryType": "temporal",
+          "refId": "A"
+        }
+      ],
+      "title": "Historic Values CO2",
+      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -675,7 +787,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 40
       },
       "id": 3,
       "panels": [],
@@ -698,6 +810,6 @@
   "timezone": "browser",
   "title": "New Dashboard",
   "uid": "cfe1j2649m8zkd",
-  "version": 6,
+  "version": 1,
   "weekStart": ""
 }

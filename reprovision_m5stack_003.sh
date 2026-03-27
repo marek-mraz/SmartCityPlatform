@@ -125,15 +125,25 @@ fi
 # -------------------------------------------------------------------------
 echo -e "\n\n0.5 Cleaning up existing device, entity, and service (if they exist)..."
 
-# Delete the device in the IoT Agent
+# Delete the device in the IoT Agent (current servicepath)
 curl -s -X DELETE "http://localhost:4041/iot/devices/${DEVICE_ID}" \
   -H "fiware-service: ${TENANT}" \
   -H "fiware-servicepath: ${FIWARE_SERVICEPATH}" > /dev/null
 
-# Delete the service group in the IoT Agent
+# Delete the device under root servicepath (stale registration)
+curl -s -X DELETE "http://localhost:4041/iot/devices/${DEVICE_ID}" \
+  -H "fiware-service: ${TENANT}" \
+  -H "fiware-servicepath: /" > /dev/null
+
+# Delete the service group in the IoT Agent (current servicepath)
 curl -s -X DELETE "http://localhost:4041/iot/services?resource=/iot/json&apikey=m5stack" \
   -H "fiware-service: ${TENANT}" \
   -H "fiware-servicepath: ${FIWARE_SERVICEPATH}" > /dev/null
+
+# Delete stale service group under root servicepath
+curl -s -X DELETE "http://localhost:4041/iot/services?resource=/iot/json&apikey=4jggokgpepnvsb2uv4s40d59ov" \
+  -H "fiware-service: ${TENANT}" \
+  -H "fiware-servicepath: /" > /dev/null
 
 # Delete the entity in Scorpio
 curl -s -X DELETE "${SCORPIO_URL}/ngsi-ld/v1/entities/${ENTITY_ID}" \

@@ -10,7 +10,7 @@
 // Moved to secrets.h
 
 // MQTT Settings
-#define MQTT_SERVER "smartcity.marek-mraz.com"
+#define MQTT_SERVER "smartcity.mark-frost.com"
 #define MQTT_PORT 1883
 #define MQTT_USER "M5Stack003"
 #define MQTT_PASS "device_secret"

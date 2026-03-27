@@ -639,7 +639,7 @@ applications:
       envFromSecret: emqx-dashboard-credentials
       emqxConfig:
         EMQX_ALLOW_ANONYMOUS: "false"
-        EMQX_ACL_NOMATCH: "deny"
+        EMQX_AUTHORIZATION__NO_MATCH: "deny"
 
   - name: emqx-oauth2-proxy
     enabled: true

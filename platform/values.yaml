@@ -13,6 +13,7 @@ ingressClassName: &ingressClassName traefik
 applications:
   - name: platform-secrets
     enabled: true
+    syncWave: "-1"
     source_path: helm-charts/platform-secrets
     source_ref: *branch
     destination: *destination
@@ -21,6 +22,7 @@ applications:
 
   - name: scorpio
     enabled: true
+    syncWave: "5"
     source_path: helm-charts/scorpio/chart
     source_ref: *branch
     destination: *destination
@@ -29,6 +31,9 @@ applications:
     values:
       postgresql:
         enabled: true
+        persistence:
+          enabled: true
+          size: 8Gi
       fullnameOverride: scorpio
       nameOverride: scorpio
       ingress:
@@ -50,6 +55,7 @@ applications:
   - name: timescale
     releaseName: tsdb
     enabled: true
+    syncWave: "1"
     source_path: helm-charts/timescale/chart
     source_ref: *branch
     destination: *destination
@@ -81,6 +87,9 @@ applications:
       tests:
         enabled: false
       grafana:
+        persistence:
+          enabled: true
+          size: 2Gi
         serviceMonitor:
           enabled: false
         extraSecretMounts: []
@@ -181,6 +190,7 @@ applications:
 
   - name: mongodb
     enabled: true
+    syncWave: "1"
     source_path: helm-charts/mongodb/chart
     source_ref: *branch
     destination: *destination
@@ -196,6 +206,7 @@ applications:
 
   - name: keycloak
     enabled: *keycloakEnabled
+    syncWave: "2"
     source_path: helm-charts/keycloak/chart
     source_ref: *branch
     destination: *destination
@@ -678,6 +689,9 @@ applications:
     helm_values:
     - values.yaml
     values:
+      persistence:
+        enabled: true
+        size: 5Gi
       oauth2Proxy:
         enabled: true
         clientId: node-red
@@ -700,6 +714,7 @@ applications:
 
   - name: iot-agent-json
     enabled: true
+    syncWave: "5"
     source_path: helm-charts/iot-agent-json/chart
     source_ref: *branch
     destination: *destination
@@ -776,6 +791,7 @@ applications:
 
   - name: nexurbis-manager
     enabled: true
+    syncWave: "5"
     source_path: helm-charts/nexurbis-manager/chart
     source_ref: *branch
     destination: *destination

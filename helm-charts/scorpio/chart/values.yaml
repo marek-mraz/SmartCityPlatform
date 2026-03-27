@@ -12,6 +12,9 @@ postgresql:
   user: "ngb"
   password: "ngb"
   database: "ngb"
+  persistence:
+    enabled: true
+    size: 8Gi
 
 kafka:
   enabled: true

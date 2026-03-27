@@ -8,6 +8,8 @@ metadata:
     app.kubernetes.io/component: postgres
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "scorpioBroker-aaio.selectorLabels" . | nindent 6 }}
@@ -39,12 +41,35 @@ spec:
               {{- end }}
             - name: POSTGRES_DB
               value: {{ .Values.postgresql.database | quote }}
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
       volumes:
         - name: postgres-data
+          {{- if .Values.postgresql.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "scorpioBroker-aaio.fullname" . }}-postgres-pvc
+          {{- else }}
           emptyDir: {}
+          {{- end }}
+---
+{{- if .Values.postgresql.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "scorpioBroker-aaio.fullname" . }}-postgres-pvc
+  labels:
+    {{- include "scorpioBroker-aaio.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.postgresql.persistence.size | default "8Gi" }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service

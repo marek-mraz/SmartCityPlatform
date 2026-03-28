@@ -54,6 +54,25 @@ spec:
               {{- end }}
             - name: DBNAME
               value: "{{ .Values.postgresql.database }}"
+            - name: QUARKUS_DATASOURCE_USERNAME
+              value: "{{ .Values.postgresql.user }}"
+            - name: QUARKUS_DATASOURCE_PASSWORD
+              {{- if .Values.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.existingSecret }}
+                  key: {{ .Values.postgresql.existingSecretPasswordKey | default "password" }}
+              {{- else }}
+              value: "{{ .Values.postgresql.password }}"
+              {{- end }}
+            - name: QUARKUS_DATASOURCE_JDBC_MAX_SIZE
+              value: "60"
+            - name: QUARKUS_DATASOURCE_REACTIVE_MAX_SIZE
+              value: "60"
+            - name: SCORPIO_HISTORY_RECORDDELETED
+              value: "true"
+            - name: HISTORY_RECORDDELETED
+              value: "true"
             - name: QUARKUS_DATASOURCE_JDBC_URL
               value: "jdbc:postgresql://{{ if .Values.postgresql.enabled }}{{ include "scorpioBroker-aaio.fullname" . }}-postgres{{ else }}{{ .Values.postgresql.host }}{{ end }}:{{ .Values.postgresql.port }}/{{ .Values.postgresql.database }}?ApplicationName=aio-runner"
             - name: QUARKUS_DATASOURCE_REACTIVE_URL

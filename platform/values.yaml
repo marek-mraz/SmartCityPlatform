@@ -54,7 +54,7 @@ applications:
 
   - name: timescale
     releaseName: tsdb
-    enabled: true
+    enabled: false
     syncWave: "1"
     source_path: helm-charts/timescale/chart
     source_ref: *branch

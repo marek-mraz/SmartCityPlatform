@@ -136,8 +136,6 @@
       "pluginVersion": "12.4.2",
       "targets": [
         {
-          "attributes": [],
-          "entityId": "urn:ngsi-ld:Vehicle:sk_banskabystrica:e3daa900-5f6b-4a6c-8495-76696a248cb8",
           "entityType": "Vehicle",
           "queryType": "geo",
           "refId": "A"

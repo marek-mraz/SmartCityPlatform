@@ -6,6 +6,7 @@ branch: &branch main
 secretsEnabled: &secretsEnabled true
 keycloakEnabled: &keycloakEnabled true
 host: &host example.com
+argoNamespace: &argoNamespace argocd
 tlsSecret: &tlsSecret
 tsdbUser: &tsdbUser postgres
 ingressClassName: &ingressClassName traefik
@@ -103,12 +104,12 @@ applications:
                       - name: KEYCLOAK_USER
                         valueFrom:
                           secretKeyRef:
-                            name: keycloak-admin-credentials
-                            key: username
+                            name: keycloak-admin-creds
+                            key: user
                       - name: KEYCLOAK_PASSWORD
                         valueFrom:
                           secretKeyRef:
-                            name: keycloak-admin-credentials
+                            name: keycloak-admin-creds
                             key: password
                       - name: GRAFANA_CLIENT_SECRET
                         valueFrom:

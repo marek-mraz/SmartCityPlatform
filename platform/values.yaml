@@ -1,26 +1,24 @@
-source: &source https://github.com/marek-mraz/SmartCityPlatform
-release: &release fiware
-destination_namespace: &destination fiware
-mqtt_port: &mqtt_port 1883
-branch: &branch main
-secretsEnabled: &secretsEnabled true
-keycloakEnabled: &keycloakEnabled true
-host: &host example.com
-argoNamespace: &argoNamespace argocd
-tlsSecret: &tlsSecret
-tsdbUser: &tsdbUser postgres
-ingressClassName: &ingressClassName traefik
+global:
+  repoURL: &repoURL https://github.com/marek-mraz/SmartCityPlatform
+  targetRevision: &targetRevision main
+  destinationNamespace: &destinationNamespace fiware
+  release: &release fiware
+  argoNamespace: &argoNamespace argocd
+  secretsEnabled: &secretsEnabled true
+  keycloakEnabled: &keycloakEnabled true
+  host: &host example.com
+  ingressClassName: &ingressClassName traefik
+  mqttPort: &mqttPort 1883
+  tsdbUser: &tsdbUser postgres
 
 applications:
 
-  - name: keycloak-db
-    enabled: *keycloakEnabled
+  keycloak-db:
+    enabled: true
     syncWave: "1"
-    source_path: helm-charts/keycloak/chart/postgresql/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/keycloak/chart/postgresql/chart
+    valueFiles:
+      - values.yaml
     values:
       auth:
         database: keycloak
@@ -32,14 +30,12 @@ applications:
         enabled: true
         size: 8Gi
 
-  - name: keycloak
-    enabled: *keycloakEnabled
+  keycloak:
+    enabled: true
     syncWave: "2"
-    source_path: helm-charts/keycloak/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/keycloak/chart
+    valueFiles:
+      - values.yaml
     values:
       database:
         vendor: postgres
@@ -80,7 +76,7 @@ applications:
               name: keycloak-db-auth
               key: password
         - name: KC_HOSTNAME
-          value: "https://auth.{{ $.Values.host | default `localhost` }}"
+          value: "https://auth.{{ $.Values.global.host | default `localhost` }}"
       extraManifests:
         - |
           apiVersion: batch/v1
@@ -198,8 +194,8 @@ applications:
                     "standardFlowEnabled": true,
                     "directAccessGrantsEnabled": true,
                     "redirectUris": [
-                      "https://grafana.{{ $.Values.host | default `localhost` }}/*",
-                      "https://grafana-metrics.{{ $.Values.host | default `localhost` }}/*"
+                      "https://grafana.{{ $.Values.global.host | default `localhost` }}/*",
+                      "https://grafana-metrics.{{ $.Values.global.host | default `localhost` }}/*"
                     ],
                     "webOrigins": ["+"],
                     "publicClient": false,
@@ -214,7 +210,7 @@ applications:
                     "standardFlowEnabled": true,
                     "directAccessGrantsEnabled": true,
                     "redirectUris": [
-                      "https://mqtt-explorer.{{ $.Values.host | default `localhost` }}/*"
+                      "https://mqtt-explorer.{{ $.Values.global.host | default `localhost` }}/*"
                     ],
                     "webOrigins": ["+"],
                     "publicClient": false,
@@ -229,7 +225,7 @@ applications:
                     "standardFlowEnabled": true,
                     "directAccessGrantsEnabled": true,
                     "redirectUris": [
-                      "https://node-red.{{ $.Values.host | default `localhost` }}/*"
+                      "https://node-red.{{ $.Values.global.host | default `localhost` }}/*"
                     ],
                     "webOrigins": ["+"],
                     "publicClient": false,
@@ -244,7 +240,7 @@ applications:
                     "standardFlowEnabled": true,
                     "directAccessGrantsEnabled": true,
                     "redirectUris": [
-                      "https://emqx.{{ $.Values.host | default `localhost` }}/*"
+                      "https://emqx.{{ $.Values.global.host | default `localhost` }}/*"
                     ],
                     "webOrigins": ["+"],
                     "publicClient": false,
@@ -259,7 +255,7 @@ applications:
                     "standardFlowEnabled": true,
                     "directAccessGrantsEnabled": true,
                     "redirectUris": [
-                      "https://manager.{{ $.Values.host | default `localhost` }}/*",
+                      "https://manager.{{ $.Values.global.host | default `localhost` }}/*",
                       "http://localhost:5173/*"
                     ],
                     "webOrigins": ["+"],
@@ -303,7 +299,6 @@ applications:
                     "protocol": "openid-connect",
                     "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
                   }
-
                 ],
                 "users": [
                   {
@@ -347,17 +342,18 @@ applications:
                   {
                     "username": "service-account-grafana-ngsild",
                     "serviceAccountClientId": "grafana-ngsild",
-                    "realmRoles": [ "consumer", "producer", "admin"],
+                    "realmRoles": ["consumer", "producer", "admin"]
                   },
                   {
                     "username": "service-account-node-red-ngsild",
                     "serviceAccountClientId": "node-red-ngsild",
-                    "realmRoles": [ "consumer", "producer", "admin"],
+                    "realmRoles": ["consumer", "producer", "admin"]
                   }
                 ],
                 "roles": {
                   "realm": [
-                    { "name": "admin",
+                    {
+                      "name": "admin",
                       "composite": true,
                       "composites": {
                         "client": {
@@ -390,7 +386,7 @@ applications:
                 }
               }
       serviceMonitor:
-          enabled: false
+        enabled: false
       ingress:
         enabled: true
         ingressClassName: *ingressClassName
@@ -398,22 +394,20 @@ applications:
           traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         rules:
-          - host: "auth.{{ $.Values.host | default `localhost` }}"
+          - host: "auth.{{ $.Values.global.host | default `localhost` }}"
             paths:
               - path: /
                 pathType: Prefix
         tls:
           - hosts:
-              - "auth.{{ $.Values.host | default `localhost` }}"
+              - "auth.{{ $.Values.global.host | default `localhost` }}"
 
-  - name: postgres
+  postgres:
     enabled: true
     syncWave: "1"
-    source_path: helm-charts/postgres/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/postgres/chart
+    valueFiles:
+      - values.yaml
     values:
       fullnameOverride: postgres
       image:
@@ -425,14 +419,12 @@ applications:
       sealedSecret:
         enabled: true
 
-  - name: kafka
+  kafka:
     enabled: false
     syncWave: "2"
-    source_path: helm-charts/kafka/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/kafka/chart
+    valueFiles:
+      - values.yaml
     values:
       fullnameOverride: kafka
       networkPolicy:
@@ -445,14 +437,12 @@ applications:
               - port: 9092
                 protocol: TCP
 
-  - name: scorpio
+  scorpio:
     enabled: false
     syncWave: "5"
-    source_path: helm-charts/scorpio/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/scorpio/chart
+    valueFiles:
+      - values.yaml
     values:
       postgresql:
         enabled: false
@@ -474,24 +464,21 @@ applications:
           traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
-          - host: scorpio.{{ $.Values.host | default `localhost` }}
+          - host: scorpio.{{ $.Values.global.host | default `localhost` }}
             paths:
               - path: /
                 pathType: Prefix
         tls:
           - hosts:
-              - scorpio.{{ $.Values.host | default `localhost` }}
+              - scorpio.{{ $.Values.global.host | default `localhost` }}
 
-
-  - name: timescale
-    releaseName: tsdb
+  timescale:
     enabled: false
+    releaseName: tsdb
     syncWave: "1"
-    source_path: helm-charts/timescale/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/timescale/chart
+    valueFiles:
+      - values.yaml
     values:
       fullnameOverride: tsdb
       nameOverride: tsdb
@@ -504,14 +491,12 @@ applications:
         enabled: true
         size: 8Gi
 
-  - name: grafana
+  grafana:
     enabled: false
-    source_path: helm-charts/grafana/chart
-    source_ref: *branch
-    destination: *destination
-    secretsReady: true # Don't change. This means that the chart is prepared to use Sealed Secrets
-    helm_values:
-    - values.yaml
+    secretsReady: true
+    path: helm-charts/grafana/chart
+    valueFiles:
+      - values.yaml
     values:
       route:
         enabled: false
@@ -535,7 +520,7 @@ applications:
           tag: "12.4"
         grafana.ini:
           server:
-            root_url: https://grafana.{{ $.Values.host | default `localhost` }}
+            root_url: https://grafana.{{ $.Values.global.host | default `localhost` }}
           auth.generic_oauth:
             enabled: true
             name: Keycloak
@@ -543,9 +528,9 @@ applications:
             client_id: grafana
             client_secret: ${GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
             scopes: openid email profile
-            auth_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/auth"
-            token_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/token"
-            api_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/userinfo"
+            auth_url: "https://auth.{{ $.Values.global.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/auth"
+            token_url: "https://auth.{{ $.Values.global.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/token"
+            api_url: "https://auth.{{ $.Values.global.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/userinfo"
             role_attribute_path: "contains(resource_access.grafana.roles[*], 'Admin') && 'Admin' || contains(resource_access.grafana.roles[*], 'Editor') && 'Editor' || 'Viewer'"
         env:
           GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: "ngsild-grafana-datasource"
@@ -572,7 +557,7 @@ applications:
                 type: ngsild-grafana-datasource
                 uid: ngsild
                 access: proxy
-                url: '{{ if $.Values.keycloakEnabled }}http://apisix:80{{ else }}http://scorpio:9090{{ end }}'
+                url: '{{ if $.Values.global.keycloakEnabled }}http://apisix:80{{ else }}http://scorpio:9090{{ end }}'
                 jsonData:
                   tenant: "airquality"
                   contextUrl: "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
@@ -581,7 +566,7 @@ applications:
                   tlsSkipVerify: false
                   httpMode: GET
                   authType: oauth
-                  tokenUrl: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/token"
+                  tokenUrl: "https://auth.{{ $.Values.global.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/token"
                   flavour: generic
                   httpHeaderName1: "NGSILD-Path"
                   clientId: "grafana-ngsild"
@@ -609,27 +594,23 @@ applications:
             traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
             traefik.ingress.kubernetes.io/router.tls: "true"
           hosts:
-            - grafana.{{ $.Values.host | default `localhost` }}
+            - grafana.{{ $.Values.global.host | default `localhost` }}
           tls:
-          - hosts:
-                - grafana.{{ $.Values.host | default `localhost` }}
+            - hosts:
+                - grafana.{{ $.Values.global.host | default `localhost` }}
 
-  - name: advanced-dashboards
+  advanced-dashboards:
     enabled: false
-    source_path: helm-charts/advanced-dashboards/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/advanced-dashboards/chart
+    valueFiles:
+      - values.yaml
 
-  - name: mongodb
+  mongodb:
     enabled: false
     syncWave: "1"
-    source_path: helm-charts/mongodb/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/mongodb/chart
+    valueFiles:
+      - values.yaml
     values:
       mongodb:
         auth:
@@ -641,25 +622,19 @@ applications:
             argocd.argoproj.io/sync-options: Prune=false
             helm.sh/resource-policy: keep
 
-  
-
-
-
-  - name: grafana-metrics
+  grafana-metrics:
     enabled: false
-    source_path: helm-charts/grafana-metrics/chart
-    source_ref: *branch
-    destination: *destination
-    secretsReady: true # Don't change. This means that the chart is prepared to use Sealed Secrets
-    helm_values:
-    - values.yaml
+    secretsReady: true
+    path: helm-charts/grafana-metrics/chart
+    valueFiles:
+      - values.yaml
     values:
       route:
         enabled: false
       grafana:
         grafana.ini:
           server:
-            root_url: https://grafana-metrics.{{ $.Values.host | default `localhost` }}
+            root_url: https://grafana-metrics.{{ $.Values.global.host | default `localhost` }}
           auth.generic_oauth:
             enabled: true
             name: Keycloak
@@ -667,9 +642,9 @@ applications:
             client_id: grafana
             client_secret: ${GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
             scopes: openid email profile
-            auth_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/auth"
-            token_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/token"
-            api_url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/userinfo"
+            auth_url: "https://auth.{{ $.Values.global.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/auth"
+            token_url: "https://auth.{{ $.Values.global.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/token"
+            api_url: "https://auth.{{ $.Values.global.host | default `localhost` }}/realms/fiware-server/protocol/openid-connect/userinfo"
             role_attribute_path: contains(resource_access.grafana.roles[*], 'Admin') && 'Admin' || contains(resource_access.grafana.roles[*], 'Editor') && 'Editor' || 'Viewer'
         envValueFrom:
           GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
@@ -685,18 +660,16 @@ applications:
             traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
             traefik.ingress.kubernetes.io/router.tls: "true"
           hosts:
-            - grafana-metrics.{{ $.Values.host | default `localhost` }}
+            - grafana-metrics.{{ $.Values.global.host | default `localhost` }}
           tls:
-          - hosts:
-                - grafana-metrics.{{ $.Values.host | default `localhost` }}
+            - hosts:
+                - grafana-metrics.{{ $.Values.global.host | default `localhost` }}
 
-  - name: emqx
+  emqx:
     enabled: false
-    source_path: helm-charts/emqx/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/emqx/chart
+    valueFiles:
+      - values.yaml
     values:
       fullnameOverride: emqx
       persistence:
@@ -704,7 +677,7 @@ applications:
         size: 1Gi
       service:
         type: LoadBalancer
-        mqtt: *mqtt_port
+        mqtt: *mqttPort
         annotations:
           load-balancer.hetzner.cloud/network-zone: "eu-central"
       envFromSecret: emqx-dashboard-credentials
@@ -712,19 +685,18 @@ applications:
         EMQX_ALLOW_ANONYMOUS: "false"
         EMQX_AUTHORIZATION__NO_MATCH: "deny"
 
-  - name: emqx-oauth2-proxy
+  emqx-oauth2-proxy:
     enabled: false
-    chart_name: oauth2-proxy
-    source: https://oauth2-proxy.github.io/manifests
-    source_ref: "6.2.2"
-    destination: *destination
+    repoURL: https://oauth2-proxy.github.io/manifests
+    targetRevision: "6.2.2"
+    chart: oauth2-proxy
     values:
       config:
         clientID: "emqx-dashboard"
         existingSecret: "emqx-dashboard-oauth2"
       extraArgs:
         provider: "oidc"
-        oidc-issuer-url: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server"
+        oidc-issuer-url: "https://auth.{{ $.Values.global.host | default `localhost` }}/realms/fiware-server"
         upstream: "http://emqx:18083"
         email-domain: "*"
         pass-access-token: "true"
@@ -736,18 +708,16 @@ applications:
           traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
-          - "emqx.{{ $.Values.host | default `localhost` }}"
+          - "emqx.{{ $.Values.global.host | default `localhost` }}"
         tls:
           - hosts:
-              - "emqx.{{ $.Values.host | default `localhost` }}"
+              - "emqx.{{ $.Values.global.host | default `localhost` }}"
 
-  - name: node-red
+  node-red:
     enabled: false
-    source_path: helm-charts/node-red/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/node-red/chart
+    valueFiles:
+      - values.yaml
     values:
       persistence:
         enabled: true
@@ -756,7 +726,7 @@ applications:
         enabled: true
         clientId: node-red
         existingSecret: node-red-oauth2
-        oidcIssuerUrl: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server"
+        oidcIssuerUrl: "https://auth.{{ $.Values.global.host | default `localhost` }}/realms/fiware-server"
       ingress:
         enabled: true
         className: *ingressClassName
@@ -764,32 +734,29 @@ applications:
           traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
-          - host: "node-red.{{ $.Values.host | default `localhost` }}"
+          - host: "node-red.{{ $.Values.global.host | default `localhost` }}"
             paths:
               - path: /
                 pathType: Prefix
         tls:
           - hosts:
-              - "node-red.{{ $.Values.host | default `localhost` }}"
+              - "node-red.{{ $.Values.global.host | default `localhost` }}"
 
-  - name: iot-agent-json
+  iot-agent-json:
     enabled: false
     syncWave: "5"
-    source_path: helm-charts/iot-agent-json/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/iot-agent-json/chart
+    valueFiles:
+      - values.yaml
     values:
       config:
         iotaCbHost: scorpio
         iotaCbPort: 9090
         iotaMqttHost: emqx
-        iotaMqttPort: *mqtt_port
+        iotaMqttPort: *mqttPort
         iotaMqttUsername: "iot_agent"
         iotaMqttPassword: "iot_password"
         iotaMongoHost: mongodb-iotagent
-        # Force strict LD mode for all incoming MQTT data
         iotaCbNgsiVersion: "ld"
         iotaJsonLdContext: "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
         iotaFallbackTenant: "airquality"
@@ -799,13 +766,11 @@ applications:
           secretName: mongodb-iotagent
           secretKey: mongodb-root-password
 
-  - name: orion-sync-unwrapper
+  orion-sync-unwrapper:
     enabled: true
-    source_path: helm-charts/orion-sync-unwrapper/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/orion-sync-unwrapper/chart
+    valueFiles:
+      - values.yaml
     values:
       ingress:
         enabled: true
@@ -814,24 +779,22 @@ applications:
           traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
-          - host: unwrapper.{{ $.Values.host | default `localhost` }}
+          - host: unwrapper.{{ $.Values.global.host | default `localhost` }}
             paths:
               - path: /
                 pathType: Prefix
         tls:
           - hosts:
-              - unwrapper.{{ $.Values.host | default `localhost` }}
+              - unwrapper.{{ $.Values.global.host | default `localhost` }}
 
-  - name: apisix
+  apisix:
     enabled: false
-    source_path: helm-charts/apisix/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/apisix/chart
+    valueFiles:
+      - values.yaml
     values:
       config:
-        keycloakDiscoveryUrl: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server/.well-known/openid-configuration"
+        keycloakDiscoveryUrl: "https://auth.{{ $.Values.global.host | default `localhost` }}/realms/fiware-server/.well-known/openid-configuration"
         existingSecret: cb-pep-credentials
         existingSecretKey: client-secret
       ingress:
@@ -841,22 +804,20 @@ applications:
           traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
-          - host: cb.{{ $.Values.host | default `localhost` }}
+          - host: cb.{{ $.Values.global.host | default `localhost` }}
             paths:
               - path: /
                 pathType: Prefix
         tls:
           - hosts:
-              - cb.{{ $.Values.host | default `localhost` }}
+              - cb.{{ $.Values.global.host | default `localhost` }}
 
-  - name: nexurbis-manager
+  nexurbis-manager:
     enabled: false
     syncWave: "5"
-    source_path: helm-charts/nexurbis-manager/chart
-    source_ref: *branch
-    destination: *destination
-    helm_values:
-    - values.yaml
+    path: helm-charts/nexurbis-manager/chart
+    valueFiles:
+      - values.yaml
     values:
       ingress:
         enabled: true
@@ -865,20 +826,20 @@ applications:
           traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
-          - host: "manager.{{ $.Values.host | default `localhost` }}"
+          - host: "manager.{{ $.Values.global.host | default `localhost` }}"
             paths:
               - path: /
                 pathType: Prefix
         tls:
           - hosts:
-              - "manager.{{ $.Values.host | default `localhost` }}"
+              - "manager.{{ $.Values.global.host | default `localhost` }}"
       env:
-        VITE_KEYCLOAK_URL: "https://auth.{{ $.Values.host | default `localhost` }}"
-        VITE_API_BASE_URL: "https://manager.{{ $.Values.host | default `localhost` }}"
-        APP_URL: "https://manager.{{ $.Values.host | default `localhost` }}"
-        API_BASE_URL: "https://manager.{{ $.Values.host | default `localhost` }}"
-        KEYCLOAK_URL: "https://auth.{{ $.Values.host | default `localhost` }}"
-        KEYCLOAK_ISSUER_URL: "https://auth.{{ $.Values.host | default `localhost` }}/realms/fiware-server"
+        VITE_KEYCLOAK_URL: "https://auth.{{ $.Values.global.host | default `localhost` }}"
+        VITE_API_BASE_URL: "https://manager.{{ $.Values.global.host | default `localhost` }}"
+        APP_URL: "https://manager.{{ $.Values.global.host | default `localhost` }}"
+        API_BASE_URL: "https://manager.{{ $.Values.global.host | default `localhost` }}"
+        KEYCLOAK_URL: "https://auth.{{ $.Values.global.host | default `localhost` }}"
+        KEYCLOAK_ISSUER_URL: "https://auth.{{ $.Values.global.host | default `localhost` }}/realms/fiware-server"
         KEYCLOAK_REALM: "fiware-server"
         KEYCLOAK_CLIENT_ID: "nexurbis-manager"
         MQTT_HOST: "emqx"
@@ -905,17 +866,15 @@ applications:
         dbExistingSecret: keycloak-db-credentials
         dbExistingSecretKey: password
 
-  - name: gitlab
+  gitlab:
     enabled: false
-    chart_name: gitlab
-    source: https://charts.gitlab.io/
-    source_ref: "8.6.0"
-    destination: *destination
+    repoURL: https://charts.gitlab.io/
+    targetRevision: "8.6.0"
+    chart: gitlab
     values:
       global:
         hosts:
-          domain: "{{ $.Values.host | default `localhost` }}"
+          domain: "{{ $.Values.global.host | default `localhost` }}"
         edition: ce
       certmanager-issuer:
-        email: admin@{{ $.Values.host | default `localhost` }}
-
+        email: admin@{{ $.Values.global.host | default `localhost` }}

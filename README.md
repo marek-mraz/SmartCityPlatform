@@ -30,6 +30,7 @@ See the [Sealed Secrets Guide](#sealed-secrets-guide) below for full instruction
 
 
 
+
 ```bash
 kubectl apply -f root-app.yaml
 ```

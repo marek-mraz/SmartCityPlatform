@@ -1,0 +1,37 @@
+{{- if .Values.networkPolicy.enabled }}
+# Default-deny all ingress, then allow only from pods that carry the
+# networkPolicy.ingressFromSelector labels (e.g. the application that needs DB access).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "postgresql.fullname" . }}
+  labels:
+    {{- include "postgresql.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "postgresql.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        {{- if .Values.networkPolicy.ingressFromSelector }}
+        - podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.ingressFromSelector | nindent 14 }}
+        {{- else }}
+        # No ingressFromSelector set — allow from any pod in the namespace.
+        # Set networkPolicy.ingressFromSelector in values to restrict access.
+        - podSelector: {}
+        {{- end }}
+      ports:
+        - port: 5432
+  egress:
+    # DNS resolution only — Postgres does not need outbound connections.
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+{{- end }}

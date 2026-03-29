@@ -7,6 +7,8 @@ kafkaVersion: 4.1.0
 
 controller:
   replicas: 1
+  storage:
+    size: 10Gi  # Persistent volume size for controller nodes
   resources:
     requests:
       cpu: '500m'
@@ -17,6 +19,8 @@ controller:
 
 broker:
   replicas: 1
+  storage:
+    size: 5Gi   # Persistent volume size for broker nodes
   resources:
     requests:
       cpu: '500m'
@@ -26,6 +30,8 @@ broker:
       memory: '8Gi'
 
 kafka:
+  # Kafka metadata version — must match a supported version for the given kafkaVersion
+  metadataVersion: 4.1-IV1
   # Listener presets; adjust as needed
   listeners:
     - name: internal
@@ -46,13 +52,19 @@ kafka:
     num.replica.fetchers: 2
     log.retention.ms: 2592000000 # 30d default
     queued.max.requests: 500
-    auto.create.topics.enable: 'true'
+    auto.create.topics.enable: 'false'  # Disabled: prevents unauthorized topic creation
     # TODO: make these defaults overridable via values.yaml or set via replica count
     offsets.topic.replication.factor: 1
     transaction.state.log.replication.factor: 1
     transaction.state.log.min.isr: 1
     default.replication.factor: 1
     min.insync.replicas: 1
+  # Cluster-level authorization — deny-by-default; access granted via KafkaUser ACLs
+  authorization:
+    enabled: true
+    type: simple  # simple = ACL-based; also supports opa, keycloak, custom
+    # superUsers:
+    #   - User:admin
 
 # Optional topics to create
 # topics:
@@ -85,10 +97,27 @@ topics: []
 #           operation: Read
 users: []
 
+# ServiceAccount configuration (referenced by _helpers.tpl)
+serviceAccount:
+  create: false
+  name: ""
+
 # Custom Service Mesh configuration
 customServiceMesh:
   enable: false
   type: ''
 
 networkPolicy:
-  enabled: false
+  # Enable NetworkPolicy to restrict Kafka access to permitted pods only
+  enabled: true
+  # Namespace where the Strimzi operator runs — required for operator management access
+  strimziOperatorNamespace: strimzi-system
+  # Additional ingress rules appended to the client-access NetworkPolicy
+  additionalIngress: []
+  #   - from:
+  #       - podSelector:
+  #           matchLabels:
+  #             app.kubernetes.io/name: my-app
+  #     ports:
+  #       - port: 9092
+  #         protocol: TCP

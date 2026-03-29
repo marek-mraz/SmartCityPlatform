@@ -9,7 +9,7 @@ metadata:
     {{- include "kafka.labels" $ | nindent 4 }}
 spec:
   partitions: {{ $t.partitions | default 3 }}
-  replicas: {{ $t.replicas | default 3 }}
+  replicas: {{ $t.replicas | default $.Values.broker.replicas }}
   {{- with $t.config }}
   config:
     {{- toYaml . | nindent 4 }}

@@ -1,3 +1,4 @@
+---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaNodePool
 metadata:
@@ -12,7 +13,7 @@ spec:
     - controller
   storage:
     type: persistent-claim
-    size: 10Gi
+    size: {{ .Values.controller.storage.size }}
     deleteClaim: false
   {{- if .Values.controller.resources }}
   resources:
@@ -33,7 +34,7 @@ spec:
     - broker
   storage:
     type: persistent-claim
-    size: 5Gi
+    size: {{ .Values.broker.storage.size }}
     deleteClaim: false
   {{- if .Values.broker.resources }}
   resources:
@@ -44,13 +45,16 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
   name: {{ include "kafka.clusterName" . }}
+  annotations:
+    strimzi.io/node-pools: enabled
+    strimzi.io/kraft: enabled
   labels:
     strimzi.io/cluster: {{ include "kafka.clusterName" . }}
     app.kubernetes.io/component: kafka
     {{- include "kafka.labels" $ | nindent 4 }}
-
 spec:
   kafka:
+    {{- if and (.Values.customServiceMesh.enable | default false) (eq (.Values.customServiceMesh.type | default "") "linkerd") }}
     template:
       pod:
         metadata:
@@ -66,19 +70,30 @@ spec:
         metadata:
           annotations:
             config.linkerd.io/opaque-ports: "9092"
+    {{- end }}
     version: {{ .Values.kafkaVersion }}
-    metadataVersion: 4.1-IV1
+    metadataVersion: {{ .Values.kafka.metadataVersion | default "4.1-IV1" }}
     listeners:
       {{- toYaml .Values.kafka.listeners | nindent 6 }}
     {{- if .Values.kafka.config }}
     config:
       {{- toYaml .Values.kafka.config | nindent 6 }}
     {{- end }}
+    {{- if .Values.kafka.authorization.enabled }}
+    authorization:
+      type: {{ .Values.kafka.authorization.type }}
+      {{- if .Values.kafka.authorization.superUsers }}
+      superUsers:
+        {{- toYaml .Values.kafka.authorization.superUsers | nindent 8 }}
+      {{- end }}
+    {{- end }}
   entityOperator:
     topicOperator: {}
     userOperator: {}
+    {{- if and (.Values.customServiceMesh.enable | default false) (eq (.Values.customServiceMesh.type | default "") "linkerd") }}
     template:
       pod:
         metadata:
           annotations:
             config.linkerd.io/skip-outbound-ports: "9091"
+    {{- end }}

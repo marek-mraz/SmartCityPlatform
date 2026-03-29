@@ -28,13 +28,16 @@ hostAliases: []
 #     - "my.host.com"
 
 # Indicates whether information about services should be injected into Pod's environment variables, matching the syntax of Docker links
-enableServiceLinks: true
+enableServiceLinks: false
 
 # Pod management policy. One of `Parallel` or `OrderedReady`
 podManagementPolicy: OrderedReady
 
 # StatefulSet's update strategy
 updateStrategy: RollingUpdate
+
+# StatefulSet's revision history limit (number of old ReplicaSets to retain). Defaults to 10 if not set
+revisionHistoryLimit: ""
 
 # Pod restart policy. One of `Always`, `OnFailure`, or `Never`
 restartPolicy: Always
@@ -54,28 +57,40 @@ serviceAccount:
   # Image pull secrets that are attached to the ServiceAccount
   imagePullSecrets: []
   # Automount API credentials for the Service Account
-  automountServiceAccountToken: true
+  # Must be true when using KUBE_PING cluster discovery (requires rbac.create: true)
+  # Keep false when using jdbc-ping (default) or dns-ping
+  automountServiceAccountToken: false
 
 rbac:
-  create: false
-  rules: []
-  # RBAC rules for KUBE_PING
-  #  - apiGroups:
-  #      - ""
-  #    resources:
-  #      - pods
-  #    verbs:
-  #      - get
-  #      - list
+  create: true
+  rules:
+    # RBAC rules for KUBE_PING cluster discovery
+    - apiGroups:
+        - ""
+      resources:
+        - pods
+      verbs:
+        - get
+        - list
 
 # SecurityContext for the entire Pod. Every container running in the Pod will inherit this SecurityContext. This might be relevant when other components of the environment inject additional containers into running Pods (service meshes are the most prominent example for this)
 podSecurityContext:
   fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
 
 # SecurityContext for the Keycloak container
 securityContext:
   runAsUser: 1000
   runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  # Keycloak runs a Quarkus augmentation/build step on startup (when configuration changes
+  # or providers are installed) which writes to /opt/keycloak/lib/quarkus inside the image.
+  # readOnlyRootFilesystem must remain false until a pre-built --optimized image is used.
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
 
 # Additional init containers, e. g. for providing custom themes
 extraInitContainers: ""
@@ -186,22 +201,24 @@ startupProbe: |
     path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/health'
     port: '{{ .Values.http.internalPort }}'
     scheme: '{{ .Values.http.internalScheme }}'
-  initialDelaySeconds: 60
+  initialDelaySeconds: 15
   timeoutSeconds: 1
   failureThreshold: 60
   periodSeconds: 5
 
 # Pod resource requests and limits
-resources: {}
-  # requests:
-  #   cpu: "500m"
-  #   memory: "1024Mi"
-  # limits:
-  #   cpu: "500m"
-  #   memory: "1024Mi"
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1024Mi"
+  limits:
+    cpu: "2"
+    memory: "2048Mi"
 
 # Add additional volumes, e. g. for custom themes
-extraVolumes: ""
+extraVolumes: |
+  - name: tmp-dir
+    emptyDir: {}
 
 # Add volume claim templates to the StatefulSet, e. g. for dynamic provisioning
 volumeClaimTemplates: ""
@@ -215,15 +232,17 @@ volumeClaimTemplates: ""
   #         storage: 1Gi
 
 # Add additional volumes mounts, e. g. for custom themes
-extraVolumeMounts: ""
+extraVolumeMounts: |
+  - name: tmp-dir
+    mountPath: /tmp
 
 # Add additional ports, e. g. for admin console or exposing JGroups ports
 extraPorts: []
 
 # Pod disruption budget
-podDisruptionBudget: {}
+podDisruptionBudget:
+  minAvailable: 1
 #  maxUnavailable: 1
-#  minAvailable: 1
 
 # Annotations for the StatefulSet
 statefulsetAnnotations: {}
@@ -394,7 +413,7 @@ ingress:
 # https://kubernetes.io/docs/concepts/services-networking/network-policies/
 networkPolicy:
   # If true, the Network policies are deployed
-  enabled: false
+  enabled: true
 
   # Additional Network policy labels
   labels: {}
@@ -440,7 +459,7 @@ dbchecker:
     # Docker image used to check Database readiness at startup
     repository: docker.io/busybox
     # Image tag for the dbchecker image
-    tag: 1.32
+    tag: 1.37
     # Image pull policy for the dbchecker image
     pullPolicy: IfNotPresent
   # SecurityContext for the dbchecker container
@@ -449,6 +468,9 @@ dbchecker:
     runAsUser: 1000
     runAsGroup: 1000
     runAsNonRoot: true
+    capabilities:
+      drop:
+        - ALL
   # Resource requests and limits for the dbchecker container
   resources:
     requests:
@@ -459,7 +481,7 @@ dbchecker:
       memory: "32Mi"
 
 database:
-  # don't create secret for db password. Instead use existing k8s secret
+  # Prefer existingSecret over password to avoid storing credentials in values.yaml
   # existingSecret: "my-existent-dbpass-secret"
   # existingSecretKey: "password"
   existingSecret: ""
@@ -470,12 +492,8 @@ database:
   port:
   database:
   username:
+  # WARNING: Do not set password here in production — use existingSecret instead
   password:
-  builtIn:
-    enabled: false
-    persistence:
-      enabled: true
-      size: 8Gi
 
 cache:
   # Use "custom" to disable automatic cache configuration
@@ -628,6 +646,10 @@ test:
   securityContext:
     runAsUser: 1000
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
   # See https://helm.sh/docs/topics/charts_hooks/#hook-deletion-policies
   deletionPolicy: before-hook-creation
 

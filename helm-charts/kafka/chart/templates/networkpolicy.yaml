@@ -1,8 +1,11 @@
 {{- if .Values.networkPolicy.enabled }}
+---
+# Policy 1: Allow inter-broker and KRaft controller communication within the cluster.
+# Strimzi brokers must communicate freely for replication and leader election.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "kafka.clusterName" . }}
+  name: {{ printf "%s-internal" (include "kafka.clusterName" .) }}
   labels:
     {{- include "kafka.labels" . | nindent 4 }}
 spec:
@@ -13,17 +16,67 @@ spec:
     - Ingress
   ingress:
     - from:
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
+            matchLabels:
+              strimzi.io/cluster: {{ include "kafka.clusterName" . }}
+---
+# Policy 2: Allow Strimzi operator to access Kafka management ports (8443, 9443).
+# Without this the operator cannot reconcile or roll the cluster.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-strimzi-operator" (include "kafka.clusterName" .) }}
+  labels:
+    {{- include "kafka.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      strimzi.io/cluster: {{ include "kafka.clusterName" . }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.strimziOperatorNamespace }}
+      ports:
+        - port: 8443
+          protocol: TCP
+        - port: 9443
+          protocol: TCP
+---
+# Policy 3: Allow permitted clients (same namespace) to reach Kafka listeners.
+# Clients in other namespaces must be added via networkPolicy.additionalIngress.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-clients" (include "kafka.clusterName" .) }}
+  labels:
+    {{- include "kafka.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      strimzi.io/cluster: {{ include "kafka.clusterName" . }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: apicurio
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: portal
               app.kubernetes.io/component: backend
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: kafka-ui
+      ports:
+        - port: 9092
+          protocol: TCP
+        - port: 9094
+          protocol: TCP
+    {{- with .Values.networkPolicy.additionalIngress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 {{- end }}

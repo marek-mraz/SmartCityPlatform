@@ -1,0 +1,55 @@
+fullnameOverride: ""
+
+image:
+  repository: postgres
+  tag: "15-alpine"
+  pullPolicy: IfNotPresent
+
+auth:
+  database: "postgres"
+  username: "postgres"
+  # NEVER set a real password here — provide via --set, a git-ignored override file,
+  # sealedSecret.enabled, or auth.existingSecret.
+  password: ""
+  # Name of an existing Secret with a 'password' key — skips Secret/SealedSecret rendering
+  existingSecret: ""
+
+persistence:
+  # Set to false to use an emptyDir (data lost on pod restart)
+  enabled: true
+  size: 5Gi
+  # Leave empty to use the cluster default StorageClass
+  storageClass: ""
+  accessMode: ReadWriteOncePod
+
+serviceAccount:
+  # Create a dedicated ServiceAccount for the Postgres pod
+  create: true
+
+podDisruptionBudget:
+  # Protect the Postgres pod from simultaneous eviction during node drain
+  enabled: true
+  minAvailable: 1
+
+networkPolicy:
+  # Enforce ingress/egress rules — requires a CNI that supports NetworkPolicy
+  enabled: true
+  # Restrict DB access to pods matching these labels.
+  # Leave empty ({}) to allow any pod in the namespace.
+  # Example: { app.kubernetes.io/name: wordpress }
+  ingressFromSelector: {}
+
+sealedSecret:
+  # When true, render a Bitnami SealedSecret instead of a plain Secret.
+  # Requires the Sealed Secrets controller installed in the cluster.
+  enabled: false
+  # Generate with: kubeseal --raw --from-file=<(echo -n 'value') --namespace <ns> --name <release>-auth
+  encryptedPassword: ""
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

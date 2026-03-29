@@ -416,7 +416,33 @@
         }
       },
       "secrets": {
-        "type": "object"
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "sealed": {
+              "type": "boolean"
+            },
+            "type": {
+              "type": "string"
+            },
+            "annotations": {
+              "type": "object"
+            },
+            "labels": {
+              "type": "object"
+            },
+            "data": {
+              "type": "object"
+            },
+            "stringData": {
+              "type": "object"
+            },
+            "encryptedData": {
+              "type": "object"
+            }
+          }
+        }
       },
       "securityContext": {
         "type": "object"

@@ -3,12 +3,17 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: kafka-allow-linkerd
+  name: {{ printf "%s-allow-linkerd" (include "kafka.clusterName" .) }}
+  labels:
+    {{- include "kafka.labels" . | nindent 4 }}
 spec:
   policyTypes:
     - Ingress
   ingress:
-    - ports:
+    # Linkerd proxy sidecar ports — restricted to same namespace only
+    - from:
+        - podSelector: {}
+      ports:
         - port: 4143
           protocol: TCP
         - port: 4190
@@ -17,7 +22,7 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels:
-      strimzi.io/cluster: kafka-cluster
+      strimzi.io/cluster: {{ include "kafka.clusterName" . }}
       strimzi.io/kind: Kafka
-      strimzi.io/name: kafka-cluster-kafka
+      strimzi.io/name: {{ printf "%s-kafka" (include "kafka.clusterName" .) }}
 {{- end }}

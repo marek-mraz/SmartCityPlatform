@@ -1,0 +1,47 @@
+{{- if .Values.configCli.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "keycloak.fullname" . }}-config-cli
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+    app.kubernetes.io/component: config-cli
+  annotations:
+    {{- toYaml .Values.configCli.annotations | nindent 4 }}
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "keycloak.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: keycloak-config-cli
+          image: "{{ .Values.configCli.image.repository }}:{{ .Values.configCli.image.tag }}"
+          env:
+            - name: KEYCLOAK_URL
+              value: "http://{{ include "keycloak.fullname" . }}-http:{{ .Values.service.httpPort | default 8080 }}{{ .Values.http.relativePath | default "/" | trimSuffix "/" }}"
+            - name: KEYCLOAK_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.configCli.adminSecret.name }}
+                  key: {{ .Values.configCli.adminSecret.userKey }}
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.configCli.adminSecret.name }}
+                  key: {{ .Values.configCli.adminSecret.passwordKey }}
+            - name: IMPORT_FILES_LOCATIONS
+              value: "/config/*"
+            {{- with .Values.configCli.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "keycloak.fullname" . }}-realm-config
+      restartPolicy: Never
+{{- end }}

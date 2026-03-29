@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: smart-city-platform
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/marek-mraz/SmartCityPlatform.git' # Your Git Repo
+    targetRevision: HEAD
+    path: platform # Points to your App of Apps Helm chart
+    helm:
+      valueFiles:
+        - values.yaml
+        - secrets.yaml
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - PruneLast=true
+      - RespectIgnoreDifferences=true

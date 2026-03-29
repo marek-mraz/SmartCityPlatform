@@ -1,0 +1,21 @@
+PostgreSQL has been deployed (Keycloak subchart).
+
+  Release name : {{ .Release.Name }}
+  Namespace    : {{ .Release.Namespace }}
+  Image        : {{ .Values.image.repository }}:{{ .Values.image.tag }}
+
+Connect from within the cluster:
+
+  Host : {{ include "postgresql.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  Port : 5432
+  DB   : {{ .Values.auth.database }}
+  User : {{ .Values.auth.username }}
+
+{{- if .Values.sealedSecret.enabled }}
+Secrets are managed via Bitnami SealedSecrets.
+{{- else if .Values.auth.existingSecret }}
+Credentials are sourced from existing Secret: {{ .Values.auth.existingSecret }}
+{{- else }}
+WARNING: Using a plain Kubernetes Secret. Consider enabling sealedSecret.enabled
+or providing auth.existingSecret for production deployments.
+{{- end }}

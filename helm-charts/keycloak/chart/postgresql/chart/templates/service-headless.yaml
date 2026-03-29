@@ -1,0 +1,17 @@
+# Headless service provides stable per-pod DNS: <pod-name>.<svc>.<ns>.svc.cluster.local
+# Required for StatefulSet pod addressing and for future multi-replica support.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "postgresql.fullname" . }}-headless
+  labels:
+    {{- include "postgresql.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: tcp-postgresql
+  selector:
+    {{- include "postgresql.selectorLabels" . | nindent 4 }}

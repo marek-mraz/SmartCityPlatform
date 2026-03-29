@@ -28,6 +28,8 @@ See the [Sealed Secrets Guide](#sealed-secrets-guide) below for full instruction
 
 ### 5. Deploy the Root Application (App of Apps)
 
+
+
 ```bash
 kubectl apply -f root-app.yaml
 ```

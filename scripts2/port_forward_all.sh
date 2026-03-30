@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# Port-forward all SmartCity Platform services from the fiware namespace.
+# Port-forward all SmartCity Platform services from the smartcity namespace.
 # Usage: ./port_forward_all.sh [--selective]
 #   --selective  Prompt before each service (y/n)
 #
 # Press Ctrl+C to stop all port-forwards.
 
-NAMESPACE="fiware"
+NAMESPACE="smartcity"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'

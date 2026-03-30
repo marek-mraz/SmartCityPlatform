@@ -653,6 +653,10 @@ test:
   # See https://helm.sh/docs/topics/charts_hooks/#hook-deletion-policies
   deletionPolicy: before-hook-creation
 
+configCli:
+  enabled: false
+  configMaps: {}
+
 ## -- Extra Kubernetes objects to deploy with the helm chart
 extraManifests: []
   # - |

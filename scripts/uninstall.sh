@@ -23,15 +23,15 @@ check_dependency "kubectl"
 
 echo "Deleting Platform Umbrella Chart (ArgoCD Applications)..."
 
-helm template fiware-platform "$(dirname "$0")/../platform" \
+helm template smartcity-platform "$(dirname "$0")/../platform" \
   --set host="${DOMAIN}" \
   --set source="${SOURCE}" \
   --set branch="${BRANCH}" \
-  --set destination_namespace=fiware \
+  --set destination_namespace=smartcity \
   --namespace argocd | kubectl delete -n argocd -f -
 
-echo "FIWARE Platform apps deleted successfully!"
+echo "SmartCity Platform apps deleted successfully!"
 
-echo "Deleting PVCs in fiware namespace..."
-kubectl delete pvc --all -n fiware --wait=false
-echo "PVCs deletion initiated."pou
+echo "Deleting PVCs in smartcity namespace..."
+kubectl delete pvc --all -n smartcity --wait=false
+echo "PVCs deletion initiated."

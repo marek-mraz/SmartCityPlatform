@@ -144,7 +144,7 @@ We provide an automated script to handle the encryption mapping directly from yo
 
 3. **Run the sealing script:**
    ```bash
-   bash scripts/seal.sh
+   bash seal.sh
    ```
 
 This script reads your `.secrets.env`, encrypts each plaintext value using `kubeseal` with `pub-cert.pem` and the correct namespace/secret mapping, and safely writes the output into `platform/secrets.yaml`.

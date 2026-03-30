@@ -79,8 +79,189 @@ applications:
         - name: KC_HOSTNAME
           value: "https://auth.{{ $.Values.global.host | default `localhost` }}"
       extraManifests:
-        - |
-          apiVersion: batch/v1
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: grafana-oauth
+            spec:
+              encryptedData:
+                client-secret: {{ .Values.sealedSecrets.grafanaOauth | quote }}
+              template:
+                metadata:
+                  name: grafana-oauth
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: mqtt-explorer-oauth2
+            spec:
+              encryptedData:
+                client-secret: {{ .Values.sealedSecrets.mqttExplorerOauth | quote }}
+              template:
+                metadata:
+                  name: mqtt-explorer-oauth2
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: node-red-oauth2
+            spec:
+              encryptedData:
+                client-secret: {{ .Values.sealedSecrets.nodeRedOauth | quote }}
+              template:
+                metadata:
+                  name: node-red-oauth2
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: cb-pep-credentials
+            spec:
+              encryptedData:
+                client-secret: {{ .Values.sealedSecrets.cbPep | quote }}
+              template:
+                metadata:
+                  name: cb-pep-credentials
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: ngsild-oauth
+            spec:
+              encryptedData:
+                client-secret: {{ .Values.sealedSecrets.ngsildOauth | quote }}
+              template:
+                metadata:
+                  name: ngsild-oauth
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: node-red-ngsild
+            spec:
+              encryptedData:
+                client-secret: {{ .Values.sealedSecrets.nodeRedNgsild | quote }}
+              template:
+                metadata:
+                  name: node-red-ngsild
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: consumer-user-credentials
+            spec:
+              encryptedData:
+                password: {{ .Values.sealedSecrets.consumerUser | quote }}
+              template:
+                metadata:
+                  name: consumer-user-credentials
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: admin-user-credentials
+            spec:
+              encryptedData:
+                password: {{ .Values.sealedSecrets.adminUser | quote }}
+              template:
+                metadata:
+                  name: admin-user-credentials
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: emqx-dashboard-oauth2
+            spec:
+              encryptedData:
+                client-secret: {{ .Values.sealedSecrets.emqxDashboardOauth | quote }}
+              template:
+                metadata:
+                  name: emqx-dashboard-oauth2
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: nexurbis-manager-oauth2
+            spec:
+              encryptedData:
+                client-secret: {{ .Values.sealedSecrets.nexurbisManagerOauth | quote }}
+              template:
+                metadata:
+                  name: nexurbis-manager-oauth2
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: tsdb-credentials
+            spec:
+              encryptedData:
+                password: {{ .Values.sealedSecrets.tsdb | quote }}
+              template:
+                metadata:
+                  name: tsdb-credentials
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: nexurbis-db-credentials
+            spec:
+              encryptedData:
+                password: {{ .Values.sealedSecrets.nexurbisDb | quote }}
+              template:
+                metadata:
+                  name: nexurbis-db-credentials
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: emqx-dashboard-credentials
+            spec:
+              encryptedData:
+                EMQX_DASHBOARD__DEFAULT_PASSWORD: {{ .Values.sealedSecrets.emqxDashboard | quote }}
+              template:
+                metadata:
+                  name: emqx-dashboard-credentials
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: mongodb-iotagent
+            spec:
+              encryptedData:
+                mongodb-root-password: {{ .Values.sealedSecrets.mongodb | quote }}
+                mongodb-passwords: {{ .Values.sealedSecrets.mongodb | quote }}
+              template:
+                metadata:
+                  name: mongodb-iotagent
+                type: Opaque
+          - |
+            apiVersion: bitnami.com/v1alpha1
+            kind: SealedSecret
+            metadata:
+              name: postgres-auth
+            spec:
+              encryptedData:
+                password: {{ .Values.sealedSecrets.postgres | quote }}
+              template:
+                metadata:
+                  name: postgres-auth
+                type: Opaque
+          - |
+            apiVersion: batch/v1
           kind: Job
           metadata:
             name: keycloak-config-cli
@@ -417,8 +598,9 @@ applications:
       auth:
         database: ngb
         username: ngb
+        existingSecret: postgres-auth
       sealedSecret:
-        enabled: true
+        enabled: false
 
   kafka:
     enabled: false
@@ -615,7 +797,7 @@ applications:
     values:
       mongodb:
         auth:
-          rootPassword: "test"
+          existingSecret: mongodb-iotagent
         persistence:
           enabled: true
           size: 8Gi
@@ -862,9 +1044,9 @@ applications:
       keycloak:
         existingSecret: nexurbis-manager-oauth2
         existingSecretKey: client-secret
-        adminExistingSecret: keycloak-admin-credentials
+        adminExistingSecret: keycloak-admin-creds
         adminExistingSecretKey: password
-        dbExistingSecret: keycloak-db-credentials
+        dbExistingSecret: keycloak-db-auth
         dbExistingSecretKey: password
 
   gitlab:

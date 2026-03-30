@@ -1,0 +1,20 @@
+{{/*
+{{- $argoNamespace := .Values.argoNamespace -}}
+{{- range $appName, $app := .Values.applications }}
+{{- $appSource := $app.source | default $.Values.source }}
+{{- if $app.enabled }}
+{{- $name := $app.name | default $appName }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.syncWave | default "0" | quote }}
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+{{- if or (eq $release "ci-cd") (eq $release "cluster-ops") (eq $release "pm") }}
+  name: {{ $name }}
+{{- else }}
+  name: {{ $.Values.destination_namespace | default $release }}-{{ $name }}
+{{- end }}
+*/}}

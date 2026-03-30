@@ -1,5 +1,5 @@
 {{- range $appName, $appConfig := .Values.applications }}
-{{- if default true $appConfig.enabled }}
+{{- if eq $appConfig.enabled true }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

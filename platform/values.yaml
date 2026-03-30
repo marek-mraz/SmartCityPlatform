@@ -6,7 +6,7 @@ global:
   argoNamespace: &argoNamespace argocd
   secretsEnabled: &secretsEnabled true
   keycloakEnabled: &keycloakEnabled true
-  host: &host example.com
+  host: &host smartcity.marek-mraz.com
   ingressClassName: &ingressClassName traefik
   mqttPort: &mqttPort 1883
   tsdbUser: &tsdbUser postgres

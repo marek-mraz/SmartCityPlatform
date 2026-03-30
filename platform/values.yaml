@@ -1,8 +1,8 @@
 global:
   repoURL: &repoURL https://github.com/marek-mraz/SmartCityPlatform
   targetRevision: &targetRevision main
-  destinationNamespace: &destinationNamespace fiware
-  release: &release fiware
+  destinationNamespace: &destinationNamespace smartcity
+  release: &release smartcity
   argoNamespace: &argoNamespace argocd
   secretsEnabled: &secretsEnabled true
   keycloakEnabled: &keycloakEnabled true

@@ -39,15 +39,15 @@ else
 fi
 
 # Create namespace if it doesn't exist
-kubectl get namespace fiware >/dev/null 2>&1 || kubectl create namespace fiware
+kubectl get namespace smartcity >/dev/null 2>&1 || kubectl create namespace smartcity
 
 # Render the umbrella chart and apply it as ArgoCD Application CRDs
-helm template fiware-platform "$(dirname "$0")/../platform" \
+helm template smartcity-platform "$(dirname "$0")/../platform" \
   --set host="${DOMAIN}" \
   --set source="${SOURCE_URL}" \
   --set branch="${BRANCH}" \
-  --set destination_namespace=fiware \
+  --set destination_namespace=smartcity \
   --namespace argocd | kubectl apply -n argocd -f -
 
-log_info "FIWARE Platform deployed successfully to ArgoCD!"
+log_info "SmartCity Platform deployed successfully to ArgoCD!"
 log_info "You can monitor the synchronization progress by running: kubectl get applications -n argocd"

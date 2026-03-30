@@ -27,4 +27,4 @@ config:
   mintakaPort: 8080
   keycloakClientId: "apisix-pep"
   keycloakClientSecret: ""
-  keycloakDiscoveryUrl: "http://keycloak-keycloakx-http:80/realms/fiware-server/.well-known/openid-configuration"
+  keycloakDiscoveryUrl: "http://keycloak-http:80/realms/fiware-server/.well-known/openid-configuration"

@@ -102,7 +102,7 @@ start_port_forward "emqx"                  18083 18083 "EMQX Dashboard API"
 
 # --- Auth ---
 # echo -e "\n${YELLOW}[Auth]${NC}"
-# start_port_forward "keycloak-keycloakx-http" 8080 80   "Keycloak"
+# start_port_forward "keycloak-http" 8080 80   "Keycloak"
 
 # --- API Gateway ---
 echo -e "\n${YELLOW}[API Gateway]${NC}"

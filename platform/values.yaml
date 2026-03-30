@@ -37,6 +37,7 @@ applications:
     valueFiles:
       - values.yaml
     values:
+      fullnameOverride: keycloak
       database:
         vendor: postgres
         hostname: keycloak-db
@@ -96,7 +97,7 @@ applications:
                     image: adorsys/keycloak-config-cli:latest
                     env:
                       - name: KEYCLOAK_URL
-                        value: "http://keycloak-keycloakx-http:80/"
+                        value: "http://keycloak-http:80/"
                       - name: KEYCLOAK_USER
                         valueFrom:
                           secretKeyRef:
